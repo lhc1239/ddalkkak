@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="딸-깍">
-<meta name="theme-color" content="#111513">
-<title>딸-깍 — 스마트 카메라 세팅 & 천체 촬영 플래너</title>
+<meta name="theme-color" content="#0f1311">
+<title>딸-깍 PRO — 초보자 스마트 노출계 · 초망원 · 한글 광해지도</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%23141a16'/><circle cx='90' cy='90' r='56' fill='none' stroke='%23f3b33d' stroke-width='10'/><circle cx='90' cy='90' r='24' fill='%23f3b33d'/><circle cx='128' cy='52' r='8' fill='%234ade80'/></svg>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <style>
   :root {
     --bg-main: #0f1311;
@@ -18,91 +20,75 @@
     --accent: #f3b33d;
     --accent-soft: rgba(243, 179, 61, 0.16);
     --green: #4ade80;
+    --blue: #60a5fa;
+    --purple: #c084fc;
     --text-main: #f3f5f4;
     --text-sub: #9ca8a1;
     --text-muted: #647069;
-    --border: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.09);
     --danger: #f87171;
-    --sat: env(safe-area-inset-top, 16px);
-    --sab: env(safe-area-inset-bottom, 16px);
+    --sat: env(safe-area-inset-top, 14px);
+    --sab: env(safe-area-inset-bottom, 14px);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body {
+  html, body {
     margin: 0;
     padding: 0;
     background: var(--bg-main);
     color: var(--text-main);
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
-    padding-top: calc(var(--sat) + 8px);
-    padding-bottom: calc(var(--sab) + 84px);
     overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    padding-top: calc(var(--sat) + 8px);
+    padding-bottom: calc(var(--sab) + 88px);
     user-select: none;
+    -webkit-user-select: none;
   }
   .container {
-    max-width: 480px;
+    max-width: 500px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 0 14px;
   }
+
+  /* Header */
   .app-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0 12px;
+    padding: 6px 0 10px;
   }
-  .brand-wrap {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .brand-wrap { display: flex; align-items: center; gap: 10px; }
   .brand-logo {
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
+    width: 38px; height: 38px; border-radius: 11px;
     background: linear-gradient(135deg, #27382b, #151c17);
-    border: 1px solid rgba(243,179,61,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    color: var(--accent);
-    font-size: 18px;
+    border: 1px solid rgba(243,179,61,0.45);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; color: var(--accent); font-size: 14px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
-  .brand-title {
-    font-size: 21px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: #fff;
+  .brand-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
+  .brand-badge {
+    font-size: 10px; font-weight: 800; color: var(--accent);
+    background: var(--accent-soft); padding: 2px 6px; border-radius: 6px; vertical-align: middle;
   }
-  .brand-sub {
-    font-size: 11px;
-    color: var(--text-sub);
-    margin-top: 1px;
-  }
+  .brand-sub { font-size: 11px; color: var(--text-sub); margin-top: 1px; }
 
+  /* Kit Bar */
   .kit-bar {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 10px 12px;
-    margin-bottom: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    margin-bottom: 12px;
+    display: flex; flex-direction: column; gap: 8px;
   }
   .kit-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    color: var(--text-sub);
-    font-weight: 600;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--text-sub); font-weight: 600;
   }
-  .kit-pills {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-  }
+  .kit-pills { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .kit-pill {
     background: var(--bg-card-alt);
     border: 1.5px solid transparent;
@@ -118,414 +104,318 @@
     color: #111;
     border-color: var(--accent);
   }
-  .kit-pill-title {
-    font-size: 12px;
-    font-weight: 800;
-    display: block;
+  .kit-pill-title { font-size: 12px; font-weight: 800; display: block; }
+  .kit-pill-desc { font-size: 10px; opacity: 0.8; margin-top: 2px; display: block; }
+
+  /* Teleconverter Bar */
+  .tc-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: rgba(96, 165, 250, 0.1);
+    border: 1.5px solid rgba(96, 165, 250, 0.35);
+    border-radius: 12px;
+    padding: 9px 11px;
+    cursor: pointer;
   }
-  .kit-pill-desc {
-    font-size: 10px;
-    opacity: 0.78;
-    margin-top: 2px;
-    display: block;
+  .tc-bar.visible { display: flex; }
+  .tc-bar.on {
+    background: rgba(243, 179, 61, 0.18);
+    border-color: var(--accent);
+  }
+  .tc-switch {
+    min-width: 52px; height: 28px; border-radius: 14px;
+    background: #334155; padding: 3px;
+    display: flex; align-items: center; transition: 0.2s;
+  }
+  .tc-bar.on .tc-switch { background: var(--accent); justify-content: flex-end; }
+  .tc-knob {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
   }
 
+  /* Sub-tab Pills */
+  .sub-tabs {
+    display: flex; gap: 6px;
+    background: var(--bg-card);
+    padding: 4px; border-radius: 13px;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .sub-tab-btn {
+    flex: 1; border: none; background: transparent;
+    color: var(--text-sub); font-size: 12px; font-weight: 800;
+    padding: 8px 6px; border-radius: 9px; cursor: pointer;
+    transition: 0.15s;
+  }
+  .sub-tab-btn.active { background: var(--accent); color: #111; }
+  .sub-pane { display: none; }
+  .sub-pane.active { display: block; }
+
+  /* Cards */
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 18px;
-    padding: 16px;
-    margin-bottom: 14px;
+    padding: 15px;
+    margin-bottom: 12px;
   }
   .hero-banner {
     background: linear-gradient(180deg, var(--bg-forest) 0%, #151e18 100%);
-    border: 1px solid rgba(243, 179, 61, 0.22);
+    border: 1px solid rgba(243, 179, 61, 0.24);
     border-radius: 18px;
-    padding: 16px;
-    margin-bottom: 14px;
+    padding: 15px;
+    margin-bottom: 12px;
     position: relative;
     overflow: hidden;
   }
-  .callout-bar {
-    border-left: 3.5px solid var(--accent);
-    padding-left: 10px;
-    margin-bottom: 12px;
-  }
-  .callout-title {
-    font-size: 15px;
-    font-weight: 800;
-    line-height: 1.35;
-  }
-  .callout-sub {
+  .callout-bar { border-left: 3.5px solid var(--accent); padding-left: 10px; margin-bottom: 12px; }
+  .callout-title { font-size: 15px; font-weight: 800; line-height: 1.35; color: #fff; }
+  .callout-sub { font-size: 12px; color: var(--text-sub); margin-top: 3px; line-height: 1.4; }
+
+  /* Warning Box */
+  .warn-box {
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.45);
+    border-radius: 12px;
+    padding: 9px 11px;
     font-size: 12px;
-    color: var(--text-sub);
-    margin-top: 3px;
+    color: #fecaca;
+    line-height: 1.45;
+    margin-top: 10px;
   }
 
-  .ctrl-row {
-    margin-top: 12px;
-  }
+  /* Controls & Stepper */
+  .ctrl-row { margin-top: 12px; }
   .ctrl-label-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--text-sub);
-    margin-bottom: 6px;
-    font-weight: 600;
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;
   }
-  .stepper-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .stepper-group { display: flex; align-items: center; gap: 8px; }
   .step-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--bg-card-alt);
-    color: #fff;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
+    width: 44px; height: 44px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--bg-card-alt);
+    color: #fff; font-size: 20px; font-weight: 700; cursor: pointer; flex-shrink: 0;
   }
   .step-btn:active { background: var(--accent); color: #111; }
   .step-display {
-    flex: 1;
-    height: 44px;
-    background: var(--bg-card-alt);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 800;
-    gap: 4px;
+    flex: 1; height: 44px; background: var(--bg-card-alt);
+    border: 1px solid var(--border); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800; gap: 4px;
   }
-  .step-unit {
-    font-size: 12px;
-    color: var(--text-sub);
-    font-weight: 600;
-  }
-  input[type=range] {
-    width: 100%;
-    accent-color: var(--accent);
-    margin-top: 6px;
+  .step-unit { font-size: 12px; color: var(--text-sub); font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--accent); margin-top: 4px; height: 24px; }
+  input[type=number], input[type=date], select {
+    background: var(--bg-card-alt); color: #fff;
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 10px; font-weight: 700; font-size: 13px;
+    font-family: inherit;
   }
 
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 12px;
-  }
+  /* Metrics Grid */
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }
+  .metrics-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-top: 10px; }
   .metric-box {
     background: var(--bg-card-alt);
     border-radius: 12px;
-    padding: 10px;
+    padding: 9px 10px;
     border: 1px solid var(--border);
   }
-  .metric-label {
-    font-size: 11px;
-    color: var(--text-sub);
-    margin-bottom: 4px;
+  .metric-label { font-size: 10.5px; color: var(--text-sub); margin-bottom: 3px; }
+  .metric-val { font-size: 16px; font-weight: 800; color: #fff; line-height: 1.25; }
+  .metric-val.highlight { color: var(--accent); }
+  .metric-unit { font-size: 10.5px; color: var(--text-sub); font-weight: 600; }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--accent); color: #111; border: none;
+    border-radius: 12px; padding: 12px 14px;
+    font-size: 13.5px; font-weight: 800; cursor: pointer; width: 100%;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   }
-  .metric-val {
-    font-size: 18px;
-    font-weight: 800;
-    color: #fff;
+  .btn-primary:active { filter: brightness(0.92); }
+  .btn-secondary {
+    background: var(--bg-card-alt); color: var(--text-main);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    text-decoration: none;
   }
-  .metric-val.highlight {
-    color: var(--accent);
-  }
-  .metric-unit {
-    font-size: 11px;
-    color: var(--text-sub);
-    font-weight: 600;
+  .btn-secondary:active { background: #2a342f; }
+  .btn-danger {
+    background: rgba(248, 113, 113, 0.2); color: #fecaca;
+    border: 1px solid rgba(248, 113, 113, 0.5); border-radius: 12px;
+    padding: 12px 14px; font-size: 13.5px; font-weight: 800; cursor: pointer; width: 100%;
   }
 
-  .upload-zone {
-    border: 2px dashed rgba(243, 179, 61, 0.45);
-    background: rgba(243, 179, 61, 0.06);
-    border-radius: 16px;
-    padding: 20px 14px;
-    text-align: center;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  .upload-zone:active {
-    background: rgba(243, 179, 61, 0.15);
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: #111;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: 800;
-    cursor: pointer;
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-  }
-  .btn-secondary {
-    background: var(--bg-card-alt);
-    color: var(--text-main);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .intent-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin: 10px 0;
-  }
+  /* Meter UI */
+  .photo-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .intent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0; }
   .intent-btn {
-    background: var(--bg-card-alt);
-    border: 1.5px solid var(--border);
-    color: var(--text-main);
-    padding: 10px;
-    border-radius: 12px;
-    text-align: left;
-    cursor: pointer;
+    background: var(--bg-card-alt); border: 1.5px solid var(--border);
+    color: var(--text-main); padding: 10px; border-radius: 12px;
+    text-align: left; cursor: pointer;
   }
-  .intent-btn.active {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-  }
+  .intent-btn.active { border-color: var(--accent); background: var(--accent-soft); }
   .dial-card {
     background: linear-gradient(135deg, #232c27, #181e1b);
-    border: 1.5px solid var(--accent);
-    border-radius: 16px;
-    padding: 14px;
-    margin-top: 12px;
+    border: 1.5px solid var(--accent); border-radius: 16px;
+    padding: 14px; margin-top: 12px;
   }
-  .dial-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-top: 10px;
-  }
+  .dial-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
   .dial-item {
-    background: rgba(0,0,0,0.35);
-    border-radius: 10px;
-    padding: 8px 4px;
-    text-align: center;
-    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.35); border-radius: 10px; padding: 8px 4px;
+    text-align: center; border: 1px solid var(--border);
   }
-  .dial-item-lbl {
-    font-size: 10px;
-    color: var(--text-sub);
-  }
-  .dial-item-val {
-    font-size: 15px;
-    font-weight: 900;
-    color: var(--accent);
-    margin-top: 3px;
-  }
-  .step-guide-list {
-    margin: 12px 0 0;
-    padding: 0;
-    list-style: none;
-  }
+  .dial-item-lbl { font-size: 10px; color: var(--text-sub); }
+  .dial-item-val { font-size: 14px; font-weight: 900; color: var(--accent); margin-top: 3px; }
+  .step-guide-list { margin: 12px 0 0; padding: 0; list-style: none; }
   .step-guide-list li {
-    font-size: 13px;
-    line-height: 1.45;
-    padding: 7px 0;
+    font-size: 12.5px; line-height: 1.45; padding: 7px 0;
     border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
+    display: flex; gap: 8px; align-items: flex-start;
   }
   .step-guide-list li:last-child { border-bottom: none; }
   .step-badge {
-    background: var(--accent);
-    color: #111;
-    font-size: 11px;
-    font-weight: 900;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 1px;
+    background: var(--accent); color: #111; font-size: 11px; font-weight: 900;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
   }
 
+  /* Scroll Chips */
   .sample-scroll {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    margin-top: 10px;
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-top: 8px;
+    -webkit-overflow-scrolling: touch;
   }
+  .sample-scroll::-webkit-scrollbar { display: none; }
   .sample-chip {
-    background: var(--bg-card-alt);
-    border: 1px solid var(--border);
-    color: var(--text-sub);
-    padding: 6px 11px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
+    background: var(--bg-card-alt); border: 1px solid var(--border);
+    color: var(--text-sub); padding: 6px 11px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; white-space: nowrap; cursor: pointer;
+    flex-shrink: 0;
   }
-  .sample-chip.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-    border-color: var(--accent);
+  .sample-chip.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+  /* Timer Display */
+  .timer-big {
+    font-size: 46px; font-weight: 900; text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent); letter-spacing: 1px;
+    margin: 10px 0 6px;
+  }
+  .timer-bar-wrap {
+    width: 100%; height: 8px; background: rgba(255,255,255,0.1);
+    border-radius: 6px; overflow: hidden; margin-bottom: 12px;
+  }
+  .timer-bar-fill {
+    height: 100%; width: 0%; background: var(--green);
+    transition: width 0.2s linear;
+  }
+
+  /* Checklist */
+  .stack-item {
+    display: flex; align-items: center; gap: 11px;
+    background: var(--bg-card-alt); border: 1.5px solid var(--border);
+    border-radius: 13px; padding: 11px 12px; margin-bottom: 8px; cursor: pointer;
+  }
+  .stack-item.checked { background: rgba(74, 222, 128, 0.1); border-color: rgba(74, 222, 128, 0.45); }
+  .stack-check {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--text-sub);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 13px; color: #111; flex-shrink: 0;
+  }
+  .stack-item.checked .stack-check { background: var(--green); border-color: var(--green); }
+
+  /* Map */
+  #lpMap {
+    width: 100%; height: 320px; border-radius: 14px;
+    border: 1px solid var(--border); background: #0d1210;
+    z-index: 1; overflow: hidden;
+  }
+  .bortle-legend {
+    display: flex; border-radius: 8px; overflow: hidden; height: 12px; margin-top: 8px;
+    border: 1px solid var(--border);
+  }
+  .bortle-legend div { flex: 1; }
+  .bortle-labels {
+    display: flex; justify-content: space-between;
+    font-size: 9.5px; color: var(--text-sub); margin-top: 3px;
   }
 
   /* Bottom Navigation */
   .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(18, 23, 20, 0.95);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(16, 21, 18, 0.96);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
     border-top: 1px solid var(--border);
     padding: 6px 4px calc(var(--sab) + 6px);
-    z-index: 100;
+    z-index: 1000;
   }
   .nav-inner {
-    max-width: 480px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 2px;
+    max-width: 500px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
   }
   .nav-tab {
-    background: transparent;
-    border: none;
-    color: var(--text-sub);
-    padding: 6px 1px;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    cursor: pointer;
-    font-size: 9px;
-    font-weight: 700;
-    white-space: nowrap;
+    background: transparent; border: none; color: var(--text-sub);
+    padding: 6px 2px; border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    cursor: pointer; font-size: 9.5px; font-weight: 700; white-space: nowrap;
   }
-  .nav-tab.active {
-    background: var(--accent);
-    color: #111;
-  }
-  .nav-icon {
-    font-size: 15px;
-    line-height: 1;
-  }
+  .nav-tab.active { background: var(--accent); color: #111; }
+  .nav-icon { font-size: 15px; line-height: 1; }
 
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
 
-  .stack-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--bg-card-alt);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    cursor: pointer;
-  }
-  .stack-item.checked {
-    background: rgba(74, 222, 128, 0.1);
-    border-color: rgba(74, 222, 128, 0.45);
-  }
-  .stack-check {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 2px solid var(--text-sub);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    font-size: 14px;
-    color: #111;
-  }
-  .stack-item.checked .stack-check {
-    background: var(--green);
-    border-color: var(--green);
-  }
-
+  /* Modal */
   .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    z-index: 200;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+    display: none; align-items: center; justify-content: center;
+    padding: 16px; z-index: 2000;
   }
   .modal-backdrop.open { display: flex; }
   .modal-sheet {
-    background: #fff;
-    color: #111;
-    border-radius: 18px;
-    max-width: 400px;
-    width: 100%;
-    padding: 20px;
+    background: #fff; color: #111; border-radius: 18px;
+    max-width: 420px; width: 100%; padding: 18px;
+    max-height: 85vh; overflow-y: auto;
   }
-  .hf-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 13px;
-  }
-  .hf-table th, .hf-table td {
-    padding: 6px 4px;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
-  }
+  .hf-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12.5px; }
+  .hf-table th, .hf-table td { padding: 6px 4px; text-align: left; border-bottom: 1px solid #e5e7eb; }
 </style>
 </head>
 <body>
 
 <div class="container">
+  <!-- Header -->
   <header class="app-header">
     <div class="brand-wrap">
       <div class="brand-logo">딸깍</div>
       <div>
-        <div class="brand-title">딸-깍 <span style="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:6px;vertical-align:middle;">PRO</span></div>
-        <div class="brand-sub">스마트 노출계 & 천체 촬영 플래너</div>
+        <div class="brand-title">딸-깍 <span class="brand-badge">PRO v4</span></div>
+        <div class="brand-sub">노출계 · 1.7× 초망원 · 릴리즈 · 한글 광해지도</div>
       </div>
     </div>
-    <div style="display:flex;gap:6px;align-items:center;">
-      <button class="btn-secondary" style="padding:6px 10px;font-size:11px;" onclick="openInstallModal()">📲 설치법</button>
-    </div>
+    <button class="btn-secondary" style="padding:7px 10px;font-size:11px;" onclick="openInstallModal()">📲 설치법</button>
   </header>
 
+  <!-- Active Gear Selector -->
   <section class="kit-bar">
     <div class="kit-top">
-      <span>내 장비 선택 (터치 시 모든 계산 즉시 반영)</span>
+      <span>내 장비 선택 (모든 탭에 실시간 연동)</span>
       <span id="activeSensorBadge" style="color:var(--accent);">APS-C · 20.1MP · 3.92µm</span>
     </div>
     <div class="kit-pills">
       <button class="kit-pill active" data-kit="a5000_35" onclick="selectKit('a5000_35')">
         <span class="kit-pill-title">📷 a5000 + 35mm F1.8</span>
-        <span class="kit-pill-desc">실내·인물·야경·별 (환산 52mm)</span>
+        <span class="kit-pill-desc">인물·실내·은하수 (환산 54mm)</span>
       </button>
       <button class="kit-pill" data-kit="a5000_55210" onclick="selectKit('a5000_55210')">
         <span class="kit-pill-title">🔭 a5000 + 55-210mm</span>
-        <span class="kit-pill-desc">야외 망원·차량·달 (F4.5-6.3)</span>
+        <span class="kit-pill-desc">망원·차량·달 (F4.5-6.3)</span>
       </button>
       <button class="kit-pill" data-kit="pocket_20" onclick="selectKit('pocket_20')">
         <span class="kit-pill-title">🎥 포켓4P · 20mm F2.0</span>
@@ -536,464 +426,648 @@
         <span class="kit-pill-desc">1인치 망원 인물·클로즈업</span>
       </button>
     </div>
+
+    <!-- Sony 1.7x Teleconverter Toggle (Shown when 55-210mm selected) -->
+    <div id="tcToggleBar" class="tc-bar" onclick="toggleTeleconverter()">
+      <div>
+        <div style="font-size:12.5px;font-weight:800;color:#fff;">🔭 소니 1.7× 텔레컨버터 (VCL-HG1758)</div>
+        <div id="tcStatusSub" style="font-size:10.5px;color:var(--text-sub);margin-top:2px;">장착 OFF · 기본 55-210mm (환산 84-321mm)</div>
+      </div>
+      <div class="tc-switch"><div class="tc-knob"></div></div>
+    </div>
   </section>
 
-  <!-- ==================== TAB 1: 찍어서 세팅 ==================== -->
+  <!-- ==================== TAB 1: 스마트 노출계 ==================== -->
   <div id="tab-meter" class="tab-pane active">
     <div class="hero-banner">
       <div class="callout-bar">
-        <div class="callout-title" id="meterHeadline">아이폰으로 피사체를 찍으면 내 카메라 다이얼 정답을 알려드려요</div>
-        <div class="callout-sub">사진의 밝기(EV)·EXIF(ISO, 셔터속도)와 피사체를 분석해 초보자도 3초 만에 세팅합니다</div>
+        <div class="callout-title">폰으로 찍으면 내 카메라 다이얼 정답을 바로 알려드려요</div>
+        <div class="callout-sub">아이폰 사진의 EXIF(ISO·셔터속도)와 밝기(EV)를 분석해 초보자도 3초 만에 맞춥니다</div>
       </div>
 
-      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
-      
-      <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
-        <div id="previewWrap" style="display:none;margin-bottom:10px;">
-          <img id="photoPreview" style="max-height:170px;border-radius:12px;max-width:100%;object-fit:cover;border:1px solid var(--border);" alt="preview">
-        </div>
-        <div id="uploadPrompt">
-          <div style="font-size:28px;margin-bottom:6px;">📸</div>
-          <div style="font-size:15px;font-weight:800;color:#fff;">여기를 눌러 사진 찍기 / 앨범에서 선택</div>
-          <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">아이폰 카메라로 찍은 사진의 ISO·셔터속도·주변 밝기를 자동 추출합니다</div>
-        </div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
+      <input type="file" id="albumInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+
+      <div id="previewWrap" style="display:none;margin-bottom:10px;text-align:center;">
+        <img id="photoPreview" style="max-height:170px;border-radius:12px;max-width:100%;object-fit:cover;border:1px solid var(--border);" alt="preview">
       </div>
 
-      <div style="font-size:11px;color:var(--text-sub);margin-top:12px;font-weight:700;">👇 사진 없이 지금 바로 상황별 노출계 테스트해보기</div>
+      <div class="photo-btn-row">
+        <button class="btn-primary" onclick="document.getElementById('cameraInput').click()">📸 바로 찍어서 측정</button>
+        <button class="btn-secondary" onclick="document.getElementById('albumInput').click()">🖼️ 앨범 사진 불러오기</button>
+      </div>
+
+      <div style="font-size:11px;color:var(--text-sub);margin-top:12px;font-weight:700;">👇 사진 없이 상황별 노출계 바로 테스트</div>
       <div class="sample-scroll">
-        <button class="sample-chip active" onclick="loadSampleScene('indoor_cafe', this)">☕ 실내 카페/아기</button>
+        <button class="sample-chip active" onclick="loadSampleScene('indoor_cafe', this)">☕ 실내 카페/아이</button>
         <button class="sample-chip" onclick="loadSampleScene('day_portrait', this)">🌿 야외 주간 인물</button>
         <button class="sample-chip" onclick="loadSampleScene('day_landscape', this)">⛰️ 맑은 날 풍경</button>
-        <button class="sample-chip" onclick="loadSampleScene('car_panning', this)">🚗 주행 차량 패닝/롤링</button>
-        <button class="sample-chip" onclick="loadSampleScene('night_street', this)">🌃 밤거리/야경 인물</button>
-        <button class="sample-chip" onclick="loadSampleScene('milky_way', this)">🌌 별·은하수 촬영지</button>
-        <button class="sample-chip" onclick="loadSampleScene('full_moon', this)">🌕 밤하늘 달 분화구</button>
+        <button class="sample-chip" onclick="loadSampleScene('car_panning', this)">🚗 주행 차량 패닝</button>
+        <button class="sample-chip" onclick="loadSampleScene('night_street', this)">🌃 밤거리 야경</button>
+        <button class="sample-chip" onclick="loadSampleScene('milky_way', this)">🌌 별·은하수</button>
+        <button class="sample-chip" onclick="loadSampleScene('full_moon', this)">🌕 달 분화구(1.7×)</button>
+        <button class="sample-chip" onclick="loadSampleScene('deep_sky', this)">🌀 오리온 성운(1.7×)</button>
       </div>
     </div>
 
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:12px;font-weight:800;color:var(--text-sub);">🔍 감지된 현장 빛 & 스마트폰 메타데이터</span>
-        <span id="detectedSceneBadge" style="font-size:11px;font-weight:800;color:var(--green);background:rgba(74,222,128,0.12);padding:3px 8px;border-radius:8px;">실내 따뜻한 조명 (EV 6.5)</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+        <span style="font-size:12px;font-weight:800;color:var(--text-sub);">🔍 감지된 현장 빛 (EV)</span>
+        <span id="detectedSceneBadge" style="font-size:11px;font-weight:800;color:var(--green);background:rgba(74,222,128,0.12);padding:3px 8px;border-radius:8px;">실내 카페 (EV 6.5)</span>
       </div>
       <div class="metrics-grid">
         <div class="metric-box">
-          <div class="metric-label">감지 셔터속도</div>
+          <div class="metric-label">감지 셔터</div>
           <div class="metric-val" id="exifShutter">1/60<span class="metric-unit"> s</span></div>
         </div>
         <div class="metric-box">
-          <div class="metric-label">감지 ISO 감도</div>
+          <div class="metric-label">감지 ISO</div>
           <div class="metric-val" id="exifIso">400</div>
         </div>
         <div class="metric-box">
-          <div class="metric-label">현장 밝기 (EV)</div>
+          <div class="metric-label">현장 밝기</div>
           <div class="metric-val highlight" id="exifEv">6.5<span class="metric-unit"> EV</span></div>
         </div>
       </div>
 
       <div class="ctrl-row">
         <div class="ctrl-label-row">
-          <span>현장 밝기 직접 보정 (어두운 밤 -4 ~ 한낮 15)</span>
+          <span>현장 밝기 미세 보정 (암흑 별밤 -4 ~ 한낮 15)</span>
           <span id="evSliderVal" style="color:var(--accent);font-weight:800;">EV 6.5</span>
         </div>
         <input type="range" id="evRange" min="-4" max="15" step="0.5" value="6.5" oninput="onManualEvChange(this.value)">
       </div>
 
-      <div style="font-size:12px;font-weight:800;color:var(--text-sub);margin-top:12px;">🎨 어떤 느낌으로 찍고 싶으신가요?</div>
+      <div style="font-size:12px;font-weight:800;color:var(--text-sub);margin-top:10px;">🎨 촬영 목적 선택</div>
       <div class="intent-grid">
         <button class="intent-btn active" data-intent="bokeh" onclick="setIntent('bokeh', this)">
-          <div style="font-size:13px;font-weight:800;">✨ 배경 흐림 (아웃포커싱)</div>
-          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">인물·아이·음식·감성 스냅</div>
+          <div style="font-size:12.5px;font-weight:800;">✨ 배경 흐림 (인물)</div>
+          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">조리개 개방 아웃포커싱</div>
         </button>
         <button class="intent-btn" data-intent="sharp" onclick="setIntent('sharp', this)">
-          <div style="font-size:13px;font-weight:800;">🏞️ 앞뒤 전체 선명하게</div>
-          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">풍경·여행지·단체 사진</div>
+          <div style="font-size:12.5px;font-weight:800;">🏞️ 전체 선명 (풍경/달)</div>
+          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">조리개 조여 쨍하게</div>
         </button>
         <button class="intent-btn" data-intent="action" onclick="setIntent('action', this)">
-          <div style="font-size:13px;font-weight:800;">⚡ 흔들림 절대 방지</div>
-          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">움직이는 아이·차량·동물</div>
+          <div style="font-size:12.5px;font-weight:800;">⚡ 흔들림 방지 (차량/아이)</div>
+          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">빠른 셔터·초망원 안전</div>
         </button>
         <button class="intent-btn" data-intent="night" onclick="setIntent('night', this)">
-          <div style="font-size:13px;font-weight:800;">🌌 야경·별 노이즈 최소</div>
-          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">삼각대 장노출·별자리·은하수</div>
+          <div style="font-size:12.5px;font-weight:800;">🌌 별·성운 (삼각대)</div>
+          <div style="font-size:10px;color:var(--text-sub);margin-top:2px;">NPF 점상 한계 자동 반영</div>
         </button>
       </div>
 
       <div class="dial-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:13px;font-weight:900;color:#fff;" id="recKitTitle">Sony a5000 + 35mm F1.8 추천 세팅</span>
-          <span style="font-size:11px;font-weight:800;background:var(--accent);color:#111;padding:2px 8px;border-radius:6px;" id="recTripodBadge">손각대 가능</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+          <span style="font-size:13px;font-weight:900;color:#fff;" id="recKitTitle">Sony a5000 + 35mm F1.8</span>
+          <span style="font-size:10.5px;font-weight:800;background:var(--accent);color:#111;padding:2px 8px;border-radius:6px;white-space:nowrap;" id="recTripodBadge">손각대 가능</span>
         </div>
         <div class="dial-grid">
-          <div class="dial-item">
-            <div class="dial-item-lbl">모드 다이얼</div>
-            <div class="dial-item-val" id="recMode">A 모드</div>
-          </div>
-          <div class="dial-item">
-            <div class="dial-item-lbl">조리개 (F)</div>
-            <div class="dial-item-val" id="recAperture">F1.8</div>
-          </div>
-          <div class="dial-item">
-            <div class="dial-item-lbl">셔터속도</div>
-            <div class="dial-item-val" id="recShutter">1/125s</div>
-          </div>
-          <div class="dial-item">
-            <div class="dial-item-lbl">ISO 감도</div>
-            <div class="dial-item-val" id="recIso">400</div>
-          </div>
+          <div class="dial-item"><div class="dial-item-lbl">모드</div><div class="dial-item-val" id="recMode">A</div></div>
+          <div class="dial-item"><div class="dial-item-lbl">조리개</div><div class="dial-item-val" id="recAperture">F1.8</div></div>
+          <div class="dial-item"><div class="dial-item-lbl">셔터</div><div class="dial-item-val" id="recShutter">1/125s</div></div>
+          <div class="dial-item"><div class="dial-item-lbl">ISO</div><div class="dial-item-val" id="recIso">400</div></div>
         </div>
-
+        <div id="meterShakeWarn" class="warn-box" style="display:none;"></div>
         <ul class="step-guide-list" id="recStepsList"></ul>
       </div>
     </div>
   </div>
 
-  <!-- ==================== TAB 2: 초점·심도 ==================== -->
+  <!-- ==================== TAB 2: 초점·심도 & 초망원 뷰파인더 ==================== -->
   <div id="tab-dof" class="tab-pane">
-    <div class="hero-banner">
-      <div class="callout-bar">
-        <div class="callout-title" id="dofHeadline">선명한 범위는 19 cm: 눈에 초점을 맞추세요</div>
-        <div class="callout-sub" id="dofSubline">배경이 부드럽게 녹아내리는 인물 아웃포커싱 구간입니다</div>
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" onclick="switchSubTab('dof', 'dof-calc', this)">🎯 심도 · 과초점</button>
+      <button class="sub-tab-btn" onclick="switchSubTab('dof', 'dof-fov', this)">🔭 초망원 뷰파인더 시뮬</button>
+    </div>
+
+    <!-- Sub 2A: 심도/과초점 -->
+    <div id="dof-calc" class="sub-pane active">
+      <div class="hero-banner">
+        <div class="callout-bar">
+          <div class="callout-title" id="dofHeadline">선명한 범위는 19 cm: 눈에 초점을 맞추세요</div>
+          <div class="callout-sub" id="dofSubline">배경이 부드럽게 녹아내리는 인물 아웃포커싱 구간입니다</div>
+        </div>
+
+        <svg id="dofSvg" viewBox="0 0 360 140" style="width:100%;height:auto;background:rgba(0,0,0,0.28);border-radius:14px;border:1px solid var(--border);">
+          <circle cx="40" cy="24" r="1" fill="#9ca8a1" opacity="0.5"/>
+          <circle cx="110" cy="18" r="1.2" fill="#9ca8a1" opacity="0.6"/>
+          <circle cx="220" cy="28" r="1" fill="#9ca8a1" opacity="0.4"/>
+          <circle cx="310" cy="20" r="1.3" fill="#9ca8a1" opacity="0.6"/>
+          <polygon points="265,108 305,65 345,108" fill="#2d3846" opacity="0.8"/>
+          <polygon points="295,108 325,77 355,108" fill="#3a4659" opacity="0.8"/>
+          <rect x="233" y="88" width="5" height="20" fill="#4b5a4e"/>
+          <circle cx="235.5" cy="78" r="14" fill="#365341"/>
+          <rect id="svgSharpZone" x="145" y="26" width="50" height="82" fill="rgba(243, 179, 61, 0.22)" stroke="#f3b33d" stroke-width="1.5"/>
+          <rect id="svgSharpPill" x="135" y="12" width="76" height="20" rx="10" fill="#f3b33d"/>
+          <text id="svgSharpText" x="173" y="26" text-anchor="middle" fill="#111" font-size="10" font-weight="900">19 cm 선명</text>
+          <g id="svgPerson" transform="translate(170, 58)">
+            <circle cx="0" cy="6" r="6" fill="#fff"/>
+            <path d="M-8,16 C-8,14 8,14 8,16 L8,33 L4,33 L4,49 L-4,49 L-4,33 L-8,33 Z" fill="#fff"/>
+          </g>
+          <g transform="translate(28, 68)">
+            <line x1="0" y1="16" x2="-9" y2="40" stroke="#9ca8a1" stroke-width="2"/>
+            <line x1="0" y1="16" x2="9" y2="40" stroke="#9ca8a1" stroke-width="2"/>
+            <line x1="0" y1="16" x2="0" y2="40" stroke="#9ca8a1" stroke-width="2"/>
+            <rect x="-12" y="0" width="24" height="16" rx="3" fill="#f3b33d"/>
+            <circle cx="0" cy="8" r="5" fill="#181e1b" stroke="#111" stroke-width="1.5"/>
+          </g>
+          <line x1="10" y1="108" x2="350" y2="108" stroke="#526058" stroke-width="1.5"/>
+          <text x="28" y="124" fill="#9ca8a1" font-size="9">m</text>
+          <text x="85" y="124" fill="#9ca8a1" font-size="9">0.5</text>
+          <text x="145" y="124" fill="#9ca8a1" font-size="9">2.0</text>
+          <text x="208" y="124" fill="#9ca8a1" font-size="9">8.0</text>
+          <text x="270" y="124" fill="#9ca8a1" font-size="9">30</text>
+          <text x="332" y="124" fill="#9ca8a1" font-size="11">∞</text>
+        </svg>
+
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-label">전방 시작</div><div class="metric-val" id="dofNear">1.91<span class="metric-unit"> m</span></div></div>
+          <div class="metric-box"><div class="metric-label">초점 거리</div><div class="metric-val highlight" id="dofFocus">2.00<span class="metric-unit"> m</span></div></div>
+          <div class="metric-box"><div class="metric-label">후방 끝</div><div class="metric-val" id="dofFar">2.10<span class="metric-unit"> m</span></div></div>
+        </div>
+        <div class="metrics-grid" style="margin-top:7px;">
+          <div class="metric-box"><div class="metric-label">총 선명 범위</div><div class="metric-val highlight" id="dofTotal">19<span class="metric-unit"> cm</span></div></div>
+          <div class="metric-box"><div class="metric-label">과초점 거리(H)</div><div class="metric-val" id="dofHyper">35.8<span class="metric-unit"> m</span></div></div>
+          <div class="metric-box"><div class="metric-label">환산 화각</div><div class="metric-val" id="dofEqFocal">54<span class="metric-unit"> mm</span></div></div>
+        </div>
       </div>
 
-      <svg id="dofSvg" viewBox="0 0 360 145" style="width:100%;height:auto;background:rgba(0,0,0,0.28);border-radius:14px;border:1px solid var(--border);">
-        <circle cx="40" cy="24" r="1" fill="#9ca8a1" opacity="0.5"/>
-        <circle cx="110" cy="18" r="1.2" fill="#9ca8a1" opacity="0.6"/>
-        <circle cx="220" cy="28" r="1" fill="#9ca8a1" opacity="0.4"/>
-        <circle cx="310" cy="20" r="1.3" fill="#9ca8a1" opacity="0.6"/>
-        <polygon points="265,112 305,68 345,112" fill="#2d3846" opacity="0.8"/>
-        <polygon points="295,112 325,80 355,112" fill="#3a4659" opacity="0.8"/>
-        <rect x="233" y="92" width="5" height="20" fill="#4b5a4e"/>
-        <circle cx="235.5" cy="82" r="14" fill="#365341"/>
-        <rect id="svgSharpZone" x="145" y="26" width="50" height="86" fill="rgba(243, 179, 61, 0.22)" stroke="#f3b33d" stroke-width="1.5"/>
-        <rect id="svgSharpPill" x="135" y="14" width="70" height="20" rx="10" fill="#f3b33d"/>
-        <text id="svgSharpText" x="170" y="28" text-anchor="middle" fill="#111" font-size="10" font-weight="900">19 cm 선명</text>
-        <g id="svgPerson" transform="translate(170, 62)">
-          <circle cx="0" cy="6" r="6" fill="#fff"/>
-          <path d="M-8,16 C-8,14 8,14 8,16 L8,33 L4,33 L4,49 L-4,49 L-4,33 L-8,33 Z" fill="#fff"/>
-        </g>
-        <g transform="translate(28, 72)">
-          <line x1="0" y1="16" x2="-9" y2="40" stroke="#9ca8a1" stroke-width="2"/>
-          <line x1="0" y1="16" x2="9" y2="40" stroke="#9ca8a1" stroke-width="2"/>
-          <line x1="0" y1="16" x2="0" y2="40" stroke="#9ca8a1" stroke-width="2"/>
-          <rect x="-12" y="0" width="24" height="16" rx="3" fill="#f3b33d"/>
-          <circle cx="0" cy="8" r="5" fill="#181e1b" stroke="#111" stroke-width="1.5"/>
-        </g>
-        <line x1="10" y1="112" x2="350" y2="112" stroke="#526058" stroke-width="1.5"/>
-        <text x="28" y="128" fill="#9ca8a1" font-size="9">m</text>
-        <text x="85" y="128" fill="#9ca8a1" font-size="9">0.5</text>
-        <text x="140" y="128" fill="#9ca8a1" font-size="9">1.5</text>
-        <text x="195" y="128" fill="#9ca8a1" font-size="9">3.0</text>
-        <text x="255" y="128" fill="#9ca8a1" font-size="9">7.0</text>
-        <text x="330" y="128" fill="#9ca8a1" font-size="11">∞</text>
-      </svg>
+      <div class="card">
+        <div class="ctrl-row" style="margin-top:0;">
+          <div class="ctrl-label-row">
+            <span>초점 거리 (피사체까지 거리)</span>
+            <span id="focusRangeLabel" style="color:var(--accent);">2.00 m</span>
+          </div>
+          <div class="stepper-group">
+            <button class="step-btn" onclick="stepFocus(-1)">−</button>
+            <div class="step-display"><span id="focusNumDisp">2.00</span><span class="step-unit">m</span></div>
+            <button class="step-btn" onclick="stepFocus(1)">+</button>
+          </div>
+          <!-- Logarithmic slider 0..100 mapped cleanly from minFocus to 400m -->
+          <input type="range" id="focusSlider" min="0" max="100" step="0.5" value="28" oninput="onFocusSliderInput(this.value)">
+        </div>
 
-      <div class="metrics-grid">
-        <div class="metric-box">
-          <div class="metric-label">전방 선명 시작</div>
-          <div class="metric-val" id="dofNear">1.91<span class="metric-unit"> m</span></div>
+        <div class="ctrl-row">
+          <div class="ctrl-label-row">
+            <span>조리개 값 (F값 · 55-210은 줌별 최대개방 자동 적용)</span>
+            <span id="apLabel" style="color:var(--accent);">f/1.8</span>
+          </div>
+          <div class="stepper-group">
+            <button class="step-btn" onclick="stepAperture(-1)">−</button>
+            <div class="step-display"><span class="step-unit">f/</span><span id="apNumDisp">1.8</span></div>
+            <button class="step-btn" onclick="stepAperture(1)">+</button>
+          </div>
         </div>
-        <div class="metric-box">
-          <div class="metric-label">현재 초점 거리</div>
-          <div class="metric-val highlight" id="dofFocus">2.00<span class="metric-unit"> m</span></div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">후방 선명 끝</div>
-          <div class="metric-val" id="dofFar">2.10<span class="metric-unit"> m</span></div>
-        </div>
-      </div>
 
-      <div class="metrics-grid" style="margin-top:8px;">
-        <div class="metric-box">
-          <div class="metric-label">총 선명한 범위</div>
-          <div class="metric-val highlight" id="dofTotal">19<span class="metric-unit"> cm</span></div>
+        <div class="ctrl-row" id="zoomCtrlRow" style="display:none;">
+          <div class="ctrl-label-row">
+            <span>55-210mm 줌 조절 <span id="zoomTcBadge" style="color:var(--accent);"></span></span>
+            <span id="focalLabel" style="color:var(--accent);">55 mm</span>
+          </div>
+          <input type="range" id="focalSlider" min="55" max="210" step="5" value="55" oninput="setBaseFocalLen(this.value)">
         </div>
-        <div class="metric-box">
-          <div class="metric-label">과초점 거리(H)</div>
-          <div class="metric-val" id="dofHyper">35.8<span class="metric-unit"> m</span></div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">피사체 뒤 선명</div>
-          <div class="metric-val" id="dofBehind">10<span class="metric-unit"> cm</span></div>
+
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn-primary" style="flex:1;" onclick="snapToHyperfocal()">🎯 과초점(무한대 선명) 맞추기</button>
+          <button class="btn-secondary" onclick="openHfCardModal()">🗂️ 과초점 카드</button>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="ctrl-row" style="margin-top:0;">
-        <div class="ctrl-label-row">
-          <span>초점 거리 (피사체와의 거리)</span>
-          <span id="focusRangeLabel" style="color:var(--accent);">2.0 m</span>
+    <!-- Sub 2B: 초망원 뷰파인더 시뮬레이터 (NEW!) -->
+    <div id="dof-fov" class="sub-pane">
+      <div class="hero-banner">
+        <div class="callout-bar">
+          <div class="callout-title" id="fovHeadline">보름달이 A5000 화면 세로의 21% 크기로 담깁니다</div>
+          <div class="callout-sub">현재 선택된 렌즈와 1.7× 텔레컨버터의 실제 화각(°)으로 천체 크기를 미리 확인하세요</div>
         </div>
-        <div class="stepper-group">
-          <button class="step-btn" onclick="stepFocus(-0.2)">−</button>
-          <div class="step-display"><span id="focusNumDisp">2.00</span><span class="step-unit">m</span></div>
-          <button class="step-btn" onclick="stepFocus(0.2)">+</button>
+
+        <div class="sample-scroll" style="margin-top:0;margin-bottom:10px;">
+          <button class="sample-chip active" data-target="moon" onclick="selectFovTarget('moon', this)">🌕 보름달 (0.52°)</button>
+          <button class="sample-chip" data-target="m42" onclick="selectFovTarget('m42', this)">🌌 오리온 대성운 M42 (1.1°)</button>
+          <button class="sample-chip" data-target="m31" onclick="selectFovTarget('m31', this)">🌀 안드로메다 M31 (3.0°)</button>
+          <button class="sample-chip" data-target="m45" onclick="selectFovTarget('m45', this)">✨ 플레이아데스 M45 (1.8°)</button>
+          <button class="sample-chip" data-target="mw" onclick="selectFovTarget('mw', this)">🌃 은하수 중심부 (25°)</button>
         </div>
-        <input type="range" id="focusSlider" min="0.3" max="20" step="0.1" value="2.0" oninput="setFocusDist(this.value)">
+
+        <canvas id="fovCanvas" width="440" height="293" style="width:100%;height:auto;border-radius:12px;border:1.5px solid var(--accent);background:#070a0d;display:block;"></canvas>
+
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-label">실제 / 환산 초점</div><div class="metric-val highlight" id="fovFocalVal">35 / 54<span class="metric-unit"> mm</span></div></div>
+          <div class="metric-box"><div class="metric-label">시야각 (가로×세로)</div><div class="metric-val" id="fovDegVal" style="font-size:13.5px;">36.7°×24.8°</div></div>
+          <div class="metric-box"><div class="metric-label">센서 위 달 크기</div><div class="metric-val" id="fovMoonPxVal">78<span class="metric-unit"> px</span></div></div>
+        </div>
+
+        <div id="fovShakeWarn" class="warn-box" style="display:none;"></div>
       </div>
 
-      <div class="ctrl-row">
-        <div class="ctrl-label-row">
-          <span>조리개 값 (F값 · 낮을수록 배경 흐림)</span>
-          <span id="apLabel" style="color:var(--accent);">f/1.8</span>
-        </div>
-        <div class="stepper-group">
-          <button class="step-btn" onclick="stepAperture(-1)">−</button>
-          <div class="step-display"><span class="step-unit">f/</span><span id="apNumDisp">1.8</span></div>
-          <button class="step-btn" onclick="stepAperture(1)">+</button>
-        </div>
-      </div>
-
-      <div class="ctrl-row" id="zoomCtrlRow" style="display:none;">
-        <div class="ctrl-label-row">
-          <span>줌 렌즈 초점거리 (55-210mm)</span>
-          <span id="focalLabel" style="color:var(--accent);">55 mm</span>
-        </div>
-        <input type="range" id="focalSlider" min="55" max="210" step="5" value="55" oninput="setFocalLen(this.value)">
-      </div>
-
-      <div style="display:flex;gap:8px;margin-top:14px;">
-        <button class="btn-primary" style="flex:1;" onclick="snapToHyperfocal()">🎯 과초점(무한대 선명) 맞추기</button>
-        <button class="btn-secondary" onclick="openHfCardModal()">🗂️ 과초점 카드</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== TAB 3: 별·은하수 ==================== -->
-  <div id="tab-astro" class="tab-pane">
-    <div class="hero-banner">
-      <div class="callout-bar">
-        <div class="callout-title" id="astroHeadline">별이 흐르기 전까지 6.8s: 500 법칙의 9.3s는 20 MP에서 흐릅니다</div>
-        <div class="callout-sub">크롭팩터(1.53x)는 화각만 바꿀 뿐, 별 흐름은 센서 픽셀 크기(3.92µm)가 결정합니다</div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-        <div style="background:rgba(0,0,0,0.45);border:1.5px solid var(--accent);border-radius:12px;padding:10px;text-align:center;">
-          <span style="background:var(--accent);color:#111;font-size:11px;font-weight:900;padding:2px 8px;border-radius:10px;" id="npfBadge">6.8 s 선명 (NPF)</span>
-          <svg viewBox="0 0 120 54" style="width:100%;height:48px;margin-top:6px;">
-            <circle cx="25" cy="18" r="1.8" fill="#fff"/><circle cx="60" cy="12" r="2.2" fill="#fff"/>
-            <circle cx="95" cy="24" r="1.6" fill="#fff"/><circle cx="42" cy="38" r="2.0" fill="#fff"/>
-            <circle cx="80" cy="40" r="1.7" fill="#fff"/>
-          </svg>
-          <div style="font-size:10px;color:var(--text-sub);">확대해도 온전한 점상 (~3.5 px)</div>
-        </div>
-        <div style="background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
-          <span style="background:#334155;color:#cbd5e1;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;" id="rule500Badge">9.3 s 궤적 (500법칙)</span>
-          <svg viewBox="0 0 120 54" style="width:100%;height:48px;margin-top:6px;">
-            <line x1="20" y1="21" x2="31" y2="15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-            <line x1="54" y1="15" x2="66" y2="9" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
-            <line x1="89" y1="27" x2="101" y2="21" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
-            <line x1="36" y1="41" x2="48" y2="35" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-            <line x1="74" y1="43" x2="86" y2="37" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:10px;color:var(--text-sub);">확대 시 별이 애매하게 늘어남 (6+ px)</div>
-        </div>
-      </div>
-
-      <div class="metrics-grid">
-        <div class="metric-box">
-          <div class="metric-label">NPF 법칙 (점상 한계)</div>
-          <div class="metric-val highlight" id="npfVal">6.8<span class="metric-unit"> s</span></div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">500 법칙 (구형 공식)</div>
-          <div class="metric-val" id="r500Val" style="color:var(--text-sub);">9.3<span class="metric-unit"> s</span></div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">센서 픽셀 피치</div>
-          <div class="metric-val" id="pitchVal">3.92<span class="metric-unit"> µm</span></div>
-        </div>
-      </div>
-
-      <div class="ctrl-row">
-        <div class="ctrl-label-row">
-          <span>센서 해상도 시뮬레이션 (기본: 내 카메라 화소)</span>
-          <span id="mpWidthLabel">가로 5456 px</span>
-        </div>
-        <div class="stepper-group">
-          <button class="step-btn" onclick="stepMegapixels(-2)">−</button>
-          <div class="step-display"><span id="mpDisp">20</span><span class="step-unit">MP</span></div>
-          <button class="step-btn" onclick="stepMegapixels(2)">+</button>
+      <div class="card">
+        <div style="font-size:12.5px;font-weight:800;color:#fff;margin-bottom:8px;">⚡ 빠른 화각 비교 원터치 전환</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          <button class="btn-secondary" onclick="quickFovPreset('a5000_35', 35, false)">35mm 단렌즈</button>
+          <button class="btn-secondary" onclick="quickFovPreset('a5000_55210', 210, false)">210mm 망원</button>
+          <button class="btn-primary" style="padding:10px 6px;font-size:12px;" onclick="quickFovPreset('a5000_55210', 210, true)">210+1.7× (357mm)</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== TAB 4: 🌙 실시간 달·별 골든타임 ==================== -->
+  <!-- ==================== TAB 3: 유선 릴리즈 · 벌브 · ND · 스태킹 ==================== -->
+  <div id="tab-release" class="tab-pane">
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" onclick="switchSubTab('release', 'rel-bulb', this)">🔌 벌브·연사 타이머</button>
+      <button class="sub-tab-btn" onclick="switchSubTab('release', 'rel-nd', this)">🕶️ ND 환산</button>
+      <button class="sub-tab-btn" onclick="switchSubTab('release', 'rel-stack', this)">📚 포커스 스태킹</button>
+    </div>
+
+    <!-- Sub 3A: 유선 릴리즈(홀드) 벌브 & 무적도의 연사 스태킹 타이머 -->
+    <div id="rel-bulb" class="sub-pane active">
+      <div class="hero-banner">
+        <div class="callout-bar">
+          <div class="callout-title" id="bulbModeTitle">유선 릴리즈(HOLD) 장노출 벌브 & 연사 타이머</div>
+          <div class="callout-sub">아이폰 사파리에서도 정확히 작동하는 알림음(3·2·1·완료) 타이머입니다</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+          <button id="modeBulbBtn" class="btn-primary" style="padding:9px;font-size:12px;" onclick="setReleaseMode('bulb')">⏱️ BULB 단일 장노출</button>
+          <button id="modeHoldBtn" class="btn-secondary" style="padding:9px;font-size:12px;" onclick="setReleaseMode('hold')">🌌 홀드 연사(스태킹)</button>
+        </div>
+
+        <div class="timer-big" id="timerDisplay">00:30</div>
+        <div style="text-align:center;font-size:12px;color:var(--text-sub);margin-bottom:8px;" id="timerSubStatus">릴리즈를 누르고 위로 밀어 HOLD 고정과 동시에 시작하세요</div>
+        <div class="timer-bar-wrap"><div class="timer-bar-fill" id="timerBarFill"></div></div>
+
+        <!-- BULB Presets -->
+        <div id="bulbControlsBox">
+          <div class="sample-scroll" style="margin-top:0;margin-bottom:10px;">
+            <button class="sample-chip" onclick="setBulbSeconds(15, this)">15초</button>
+            <button class="sample-chip active" onclick="setBulbSeconds(30, this)">30초</button>
+            <button class="sample-chip" onclick="setBulbSeconds(45, this)">45초</button>
+            <button class="sample-chip" onclick="setBulbSeconds(60, this)">1분</button>
+            <button class="sample-chip" onclick="setBulbSeconds(120, this)">2분</button>
+            <button class="sample-chip" onclick="setBulbSeconds(180, this)">3분</button>
+            <button class="sample-chip" onclick="setBulbSeconds(300, this)">5분</button>
+          </div>
+          <div class="stepper-group" style="margin-bottom:10px;">
+            <button class="step-btn" onclick="stepBulbSec(-5)">−5</button>
+            <div class="step-display"><span id="bulbTargetDisp">30</span><span class="step-unit">초 노출</span></div>
+            <button class="step-btn" onclick="stepBulbSec(5)">+5</button>
+          </div>
+        </div>
+
+        <!-- HOLD Continuous Stacking Controls -->
+        <div id="holdControlsBox" style="display:none;">
+          <div class="ctrl-row" style="margin-top:0;">
+            <div class="ctrl-label-row">
+              <span>1장당 셔터속도 (현재 렌즈 NPF: <b id="holdNpfHint" style="color:var(--accent);">6.8초</b>)</span>
+              <button class="btn-secondary" style="padding:3px 8px;font-size:10px;" onclick="syncHoldToNpf()">NPF 자동맞춤</button>
+            </div>
+            <div class="stepper-group">
+              <button class="step-btn" onclick="stepHoldShutter(-0.5)">−</button>
+              <div class="step-display"><span id="holdShutterDisp">1.0</span><span class="step-unit">초 / 컷</span></div>
+              <button class="step-btn" onclick="stepHoldShutter(0.5)">+</button>
+            </div>
+          </div>
+
+          <div class="ctrl-row">
+            <div class="ctrl-label-row">
+              <span>목표 총 누적 노출 (딥스카이/별궤적)</span>
+              <span id="holdTotalExpLbl" style="color:var(--green);font-weight:800;">5분 (300초)</span>
+            </div>
+            <div class="sample-scroll" style="margin-top:2px;">
+              <button class="sample-chip" onclick="setHoldGoalMin(2, this)">2분</button>
+              <button class="sample-chip active" onclick="setHoldGoalMin(5, this)">5분</button>
+              <button class="sample-chip" onclick="setHoldGoalMin(10, this)">10분</button>
+              <button class="sample-chip" onclick="setHoldGoalMin(20, this)">20분</button>
+              <button class="sample-chip" onclick="setHoldGoalMin(30, this)">30분</button>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box"><div class="metric-label">필요 촬영 컷수</div><div class="metric-val highlight" id="holdShotsVal">300<span class="metric-unit"> 장</span></div></div>
+            <div class="metric-box"><div class="metric-label">릴리즈 홀드 시간</div><div class="metric-val" id="holdDurationVal">7분 0초</div></div>
+            <div class="metric-box"><div class="metric-label">예상 RAW 용량</div><div class="metric-val" id="holdStorageVal">6.0<span class="metric-unit"> GB</span></div></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-sub);margin-top:8px;line-height:1.45;">
+            💡 <b>a5000 팁:</b> 드라이브 모드를 <b>[연사]</b>로 두고 유선 릴리즈를 잠그면(HOLD), 인터벌 타이머 없이도 설정한 셔터속도로 계속 연속 촬영됩니다! (컷당 저장 간격 0.4초 반영)
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn-primary" id="timerStartBtn" onclick="toggleMainTimer()">▶️ 타이머 시작 (알림음 ON)</button>
+          <button class="btn-secondary" onclick="resetMainTimer()">초기화</button>
+        </div>
+      </div>
+
+      <!-- Calibration Checklist -->
+      <div class="card">
+        <div class="callout-bar">
+          <div class="callout-title">천체 스태킹 현장 필수 체크리스트</div>
+          <div class="callout-sub">본촬영 후 다크 프레임을 찍어둬야 Astro Stacker 합성 시 노이즈가 싹 사라집니다</div>
+        </div>
+        <div id="calibChecklistWrap"></div>
+        <button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="resetCalibChecks()">🔄 체크리스트 초기화</button>
+      </div>
+    </div>
+
+    <!-- Sub 3B: ND 필터 환산기 -->
+    <div id="rel-nd" class="sub-pane">
+      <div class="hero-banner">
+        <div class="callout-bar">
+          <div class="callout-title" id="ndHeadline">10스톱 ND 장착 시: 1/250s → 4.1s</div>
+          <div class="callout-sub" id="ndAdvice">노출 4.1초: 삼각대에 고정하고 손떨림 보정(OSS)을 끄세요</div>
+        </div>
+
+        <div style="font-size:38px;font-weight:900;color:var(--accent);margin:4px 0;" id="ndResultBig">4.1 s</div>
+        <div style="font-size:12px;color:var(--text-sub);" id="ndSubCompare">필터 전 1/250s · 10스톱 (ND1000 / 1024×)</div>
+
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-label">감광 스톱</div><div class="metric-val highlight" id="ndStopsVal">10<span class="metric-unit"> 스톱</span></div></div>
+          <div class="metric-box"><div class="metric-label">광학 농도</div><div class="metric-val" id="ndOdVal">3.0<span class="metric-unit"> ND</span></div></div>
+          <div class="metric-box"><div class="metric-label">노출 배수</div><div class="metric-val" id="ndFactorVal">1024×</div></div>
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label-row">
+            <span>필터 장착 전 기본 셔터속도</span>
+            <span id="baseShutterLbl" style="color:var(--accent);">1/250 s</span>
+          </div>
+          <input type="range" id="baseShutterIdx" min="0" max="14" step="1" value="4" oninput="calcNdFilter()">
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label-row">
+            <span>ND 필터 농도 (스톱 수)</span>
+            <span id="ndFilterNameLbl" style="color:var(--accent);">ND1024 (10스톱)</span>
+          </div>
+          <div class="stepper-group">
+            <button class="step-btn" onclick="stepNdStops(-1)">−</button>
+            <div class="step-display"><span id="ndStopDisp">10</span><span class="step-unit">스톱</span></div>
+            <button class="step-btn" onclick="stepNdStops(1)">+</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="margin-top:12px;" onclick="sendNdToBulbTimer()">⏱️ 이 시간으로 벌브 타이머 바로 세팅</button>
+      </div>
+    </div>
+
+    <!-- Sub 3C: 동적 포커스 스태킹 -->
+    <div id="rel-stack" class="sub-pane">
+      <div class="card">
+        <div class="callout-bar">
+          <div class="callout-title" id="focusStackTitle">포커스 스태킹 자동 분할 (현재 렌즈 기준)</div>
+          <div class="callout-sub">시작 거리부터 무한대(∞)까지 겹침 여유(20%)를 두고 몇 컷을 찍어야 하는지 자동 계산합니다</div>
+        </div>
+
+        <div class="ctrl-row" style="margin-top:0;">
+          <div class="ctrl-label-row">
+            <span>가장 가까운 피사체 시작 거리</span>
+            <span id="stackStartLbl" style="color:var(--accent);">0.50 m</span>
+          </div>
+          <input type="range" id="stackStartSlider" min="0.3" max="5.0" step="0.1" value="0.5" oninput="renderDynamicFocusStack()">
+        </div>
+
+        <div id="stackListWrap" style="margin-top:12px;"></div>
+        <button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="resetStackChecks()">🔄 스태킹 체크 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 4: 실시간 달·별·은하수 플래너 ==================== -->
   <div id="tab-moon" class="tab-pane">
-    <div class="hero-banner">
-      <div class="callout-bar">
-        <div class="callout-title" id="moonPlannerTitle">오늘 밤 달빛 피하기 & 별/달 촬영 골든타임</div>
-        <div class="callout-sub">실시간 달의 위상·방향·고도를 정밀 계산하여 최적의 촬영 시간대를 알려드립니다</div>
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" onclick="switchSubTab('moon', 'moon-plan', this)">🌙 달·별 골든타임</button>
+      <button class="sub-tab-btn" onclick="switchSubTab('moon', 'moon-npf', this)">✨ NPF 별 점상 계산</button>
+    </div>
+
+    <!-- Sub 4A: 실시간 달/은하수 천문 플래너 -->
+    <div id="moon-plan" class="sub-pane active">
+      <div class="hero-banner">
+        <div class="callout-bar">
+          <div class="callout-title" id="moonHeadline">실시간 달 위상 · 달 피하기 암흑 시간 계산</div>
+          <div class="callout-sub" id="moonLocSub">관측 기준: 대구광역시 (35.87°N, 128.60°E) · 지도 탭에서 위치 변경 가능</div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+          <input type="date" id="plannerDateInput" onchange="updateMoonPlanner()" style="flex:1;">
+          <button class="btn-secondary" style="padding:8px 12px;" onclick="setPlannerToday()">오늘</button>
+        </div>
+
+        <!-- Visual Moon Phase + Live NOW Status -->
+        <div style="display:flex;align-items:center;gap:14px;background:rgba(0,0,0,0.32);border:1px solid var(--border);border-radius:14px;padding:12px;">
+          <svg id="moonPhaseSvg" viewBox="0 0 80 80" width="72" height="72" style="flex-shrink:0;"></svg>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:900;color:#fff;" id="moonPhaseNameBig">차오르는 보름달 (94%)</div>
+            <div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px;" id="moonAgeText">월령 12.5일 · 월출 15:20 / 월몰 04:45</div>
+            <div style="font-size:11.5px;color:var(--text-sub);margin-top:4px;" id="moonNowPosText">현재 시각 기준: 남동쪽 (135°) · 고도 42.1°</div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-label">🌟 별·은하수 점수</div><div class="metric-val" id="starScoreVal" style="color:var(--green);">92점</div></div>
+          <div class="metric-box"><div class="metric-label">🌕 달 분화구 점수</div><div class="metric-val highlight" id="moonShootScoreVal">85점</div></div>
+          <div class="metric-box"><div class="metric-label">은하수 최고고도</div><div class="metric-val" id="mwPeakNightVal">25.0°</div></div>
+        </div>
+
+        <!-- Tonight Chart: Moon Alt vs Milky Way Alt (18:00 ~ 06:00 KST) -->
+        <div style="margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-sub);margin-bottom:4px;">
+            <span>오늘 밤 고도 변화 (18:00 ~ 06:00)</span>
+            <span><span style="color:#f3b33d;">━</span> 은하수 중심 &nbsp;<span style="color:#60a5fa;">┄</span> 달 고도</span>
+          </div>
+          <svg id="nightSkySvg" viewBox="0 0 360 135" style="width:100%;height:auto;background:rgba(0,0,0,0.35);border-radius:12px;border:1px solid var(--border);"></svg>
+        </div>
       </div>
 
-      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
-        <span style="font-size:12px;color:var(--text-sub);font-weight:700;">날짜 선택:</span>
-        <input type="date" id="plannerDateInput" onchange="updateMoonPlanner()" style="background:var(--bg-card-alt);color:#fff;border:1px solid var(--border);border-radius:10px;padding:6px 10px;font-weight:700;font-size:13px;">
-      </div>
+      <!-- Moonless Dark Window Box -->
+      <div class="card">
+        <div class="callout-bar">
+          <div class="callout-title" id="goldenActionTitle">🌌 달 없는 완전 암흑 골든타임</div>
+          <div class="callout-sub" id="goldenTimeDesc">태양 고도 -15° 이하 & 달이 지평선 아래에 있는 시간입니다</div>
+        </div>
+        <div style="background:var(--bg-card-alt);border:1.5px solid var(--accent);border-radius:14px;padding:13px;">
+          <div style="font-size:11px;color:var(--accent);font-weight:800;">✨ 오늘 밤 추천 촬영 타임라인</div>
+          <div style="font-size:17px;font-weight:900;color:#fff;margin-top:4px;" id="goldenTimeHours">계산 중...</div>
+          <div style="font-size:12px;color:var(--text-sub);margin-top:6px;line-height:1.45;" id="goldenTimeTip"></div>
+        </div>
 
-      <div class="metrics-grid">
-        <div class="metric-box">
-          <div class="metric-label">달의 위상(형태)</div>
-          <div class="metric-val highlight" id="moonPhaseVal" style="font-size:15px;">24% (초승달)</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+          <span style="font-size:12px;font-weight:800;color:var(--text-sub);">📅 앞으로 14일간 출조 추천일 (터치해 확인)</span>
         </div>
-        <div class="metric-box">
-          <div class="metric-label">달 뜨고 지는 시각</div>
-          <div class="metric-val" id="moonTimesVal" style="font-size:14px;">11:20 / 22:15</div>
+        <div class="sample-scroll" style="margin-top:6px;margin-bottom:8px;">
+          <button class="sample-chip active" onclick="setCalendarFilter('all', this)">전체 14일</button>
+          <button class="sample-chip" onclick="setCalendarFilter('star', this)">🌟 달 피해서 별 좋은 날만</button>
+          <button class="sample-chip" onclick="setCalendarFilter('moon', this)">🌕 달 분화구 좋은 날만</button>
         </div>
-        <div class="metric-box">
-          <div class="metric-label">별찍기 적합도</div>
-          <div class="metric-val" id="starScoreVal" style="color:var(--green);">88점 🌟</div>
-        </div>
-      </div>
-
-      <div class="metrics-grid" style="margin-top:8px;">
-        <div class="metric-box">
-          <div class="metric-label">밤 10시 달 위치(방위)</div>
-          <div class="metric-val" id="moonAzimuthVal" style="font-size:14px;">남서 (245°)</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">밤 10시 달 고도</div>
-          <div class="metric-val highlight" id="moonAltitudeVal" style="font-size:14px;">12.4° (낮음)</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">달 촬영 적합도</div>
-          <div class="metric-val" id="moonShootScoreVal" style="color:var(--accent);">45점 🌕</div>
-        </div>
+        <div id="weekMoonList" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
     </div>
 
-    <!-- 오늘 밤 추천 타임라인 -->
-    <div class="card">
-      <div class="callout-bar">
-        <div class="callout-title" id="goldenActionTitle">🌙 달 피해서 은하수·별 찍기 가이드</div>
-        <div class="callout-sub" id="goldenTimeDesc">달이 지고 난 직후부터 여명이 트기 전까지가 가장 어둡고 선명합니다</div>
-      </div>
+    <!-- Sub 4B: NPF 별 점상 노출 계산기 -->
+    <div id="moon-npf" class="sub-pane">
+      <div class="hero-banner">
+        <div class="callout-bar">
+          <div class="callout-title" id="astroHeadline">별이 흐르기 전까지 6.8s: 500 법칙의 9.3s는 흐릅니다</div>
+          <div class="callout-sub" id="astroSubline">픽셀 피치와 조리개, 1.7× 컨버터까지 반영한 정밀 NPF 공식입니다</div>
+        </div>
 
-      <div style="background:var(--bg-card-alt);border:1.5px solid var(--accent);border-radius:14px;padding:14px;margin-top:10px;">
-        <div style="font-size:11px;color:var(--accent);font-weight:800;margin-bottom:4px;">✨ 추천 촬영 타임라인</div>
-        <div style="font-size:18px;font-weight:900;color:#fff;" id="goldenTimeHours">새벽 00:30 ~ 03:45</div>
-        <div style="font-size:12px;color:var(--text-sub);margin-top:6px;line-height:1.45;" id="goldenTimeTip">
-          초승달이라 달빛이 일찍 사라집니다. 자정 이후 남쪽 하늘을 향해 F1.8 조리개와 NPF 6.8초 세팅으로 연사하세요!
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="background:rgba(0,0,0,0.45);border:1.5px solid var(--accent);border-radius:12px;padding:10px;text-align:center;">
+            <span style="background:var(--accent);color:#111;font-size:11px;font-weight:900;padding:2px 8px;border-radius:10px;" id="npfBadge">6.8 s 선명 (NPF)</span>
+            <svg viewBox="0 0 120 50" style="width:100%;height:44px;margin-top:6px;">
+              <circle cx="25" cy="18" r="1.8" fill="#fff"/><circle cx="60" cy="12" r="2.2" fill="#fff"/>
+              <circle cx="95" cy="24" r="1.6" fill="#fff"/><circle cx="42" cy="36" r="2.0" fill="#fff"/>
+              <circle cx="80" cy="38" r="1.7" fill="#fff"/>
+            </svg>
+            <div style="font-size:10px;color:var(--text-sub);">확대해도 둥근 점상 유지</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+            <span style="background:#334155;color:#cbd5e1;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;" id="rule500Badge">9.3 s 궤적 (500법칙)</span>
+            <svg viewBox="0 0 120 50" style="width:100%;height:44px;margin-top:6px;">
+              <line x1="20" y1="21" x2="31" y2="15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="54" y1="15" x2="66" y2="9" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+              <line x1="89" y1="27" x2="101" y2="21" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="36" y1="39" x2="48" y2="33" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="74" y1="41" x2="86" y2="35" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:10px;color:var(--text-sub);">확대 시 별이 길게 늘어남</div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-label">NPF (엄격 점상)</div><div class="metric-val highlight" id="npfVal">6.8<span class="metric-unit"> s</span></div></div>
+          <div class="metric-box"><div class="metric-label">500 법칙 (구형)</div><div class="metric-val" id="r500Val" style="color:var(--text-sub);">9.3<span class="metric-unit"> s</span></div></div>
+          <div class="metric-box"><div class="metric-label">센서 픽셀 피치</div><div class="metric-val" id="pitchVal">3.92<span class="metric-unit"> µm</span></div></div>
+        </div>
+
+        <div class="ctrl-row">
+          <div class="ctrl-label-row">
+            <span>센서 해상도 시뮬레이션</span>
+            <span id="mpWidthLabel">가로 5456 px</span>
+          </div>
+          <div class="stepper-group">
+            <button class="step-btn" onclick="stepMegapixels(-2)">−</button>
+            <div class="step-display"><span id="mpDisp">20</span><span class="step-unit">MP</span></div>
+            <button class="step-btn" onclick="stepMegapixels(2)">+</button>
+          </div>
         </div>
       </div>
-
-      <div style="font-size:12px;font-weight:800;color:var(--text-sub);margin-top:16px;">📅 앞으로 7일간 별찍기 vs 달찍기 추천 예보</div>
-      <div id="weekMoonList" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
     </div>
   </div>
 
-  <!-- ==================== TAB 5: 🗺️ 촬영지 시야각 & 광해 계산 (NEW!) ==================== -->
+  <!-- ==================== TAB 5: 한글 광해 지도 & 시야 차폐각 ==================== -->
   <div id="tab-spot" class="tab-pane">
     <div class="hero-banner">
       <div class="callout-bar">
-        <div class="callout-title">촬영 스팟 주변 산/건물 시야 차폐 & 광해(Bortle) 분석</div>
-        <div class="callout-sub">내 위치 고도와 주변 장애물 거리·높이를 계산해 은하수/별 관측 가능 여부를 판별합니다</div>
+        <div class="callout-title">한글 광해 지도 & 전국 별 명소 분석</div>
+        <div class="callout-sub">지도를 터치해 원하는 지점의 광해 등급(보틀)과 가장 가까운 도시 광해 방향을 확인하세요</div>
       </div>
 
-      <!-- 추천 천체 스팟 프리셋 칩 -->
-      <div style="font-size:11px;color:var(--text-sub);margin-bottom:6px;font-weight:700;">📍 대표 천체 촬영 스팟 바로 불러오기</div>
-      <div class="sample-scroll" style="margin-top:0;margin-bottom:12px;">
-        <button class="sample-chip active" onclick="loadSpotPreset('odosan', this)">합천 오도산 KT (1134m)</button>
-        <button class="sample-chip" onclick="loadSpotPreset('gamaksan', this)">거창 감악산 (952m)</button>
-        <button class="sample-chip" onclick="loadSpotPreset('bohyeon', this)">영천 보현산 천문대 (1124m)</button>
-        <button class="sample-chip" onclick="loadSpotPreset('biseul', this)">대구 비슬산 대견사 (1000m)</button>
-        <button class="sample-chip" onclick="loadSpotPreset('city_park', this)">도심지 공원/옥상 (50m)</button>
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+        <button class="btn-primary" style="flex:1;padding:9px 10px;font-size:12px;" onclick="locateMyGps()">📍 내 GPS 위치</button>
+        <button class="btn-secondary" style="padding:9px 10px;font-size:11.5px;" id="mapStyleBtn" onclick="toggleMapStyle()">🌙 다크맵 전환</button>
       </div>
 
-      <!-- 시야각 & 지평선 차폐 시각화 SVG -->
-      <svg id="spotHorizonSvg" viewBox="0 0 360 140" style="width:100%;height:auto;background:rgba(0,0,0,0.35);border-radius:12px;border:1px solid var(--border);">
-        <!-- Sky Grid -->
-        <line x1="20" y1="85" x2="340" y2="85" stroke="#475569" stroke-dasharray="3,3" stroke-width="1"/>
-        <text x="24" y="80" fill="#9ca8a1" font-size="9">10° 은하수 마지노선</text>
-        <line x1="20" y1="45" x2="340" y2="45" stroke="#475569" stroke-dasharray="3,3" stroke-width="1"/>
-        <text x="24" y="40" fill="#9ca8a1" font-size="9">30° 높은 밤하늘</text>
-        
-        <!-- Stars in viewable sky -->
-        <circle cx="100" cy="25" r="1.5" fill="#fff"/>
-        <circle cx="160" cy="18" r="1.8" fill="#fff"/>
-        <circle cx="230" cy="30" r="1.5" fill="#fff"/>
-        <circle cx="280" cy="20" r="1.8" fill="#fff"/>
-        
-        <!-- Milky Way Arch -->
-        <path d="M 60 115 Q 180 15 300 115" fill="none" stroke="rgba(243, 179, 61, 0.35)" stroke-width="16" stroke-linecap="round"/>
+      <!-- Quick Korean Star Spot Chips -->
+      <div class="sample-scroll" style="margin-top:0;margin-bottom:8px;">
+        <button class="sample-chip active" data-spot="odosan" onclick="selectStarSpot('odosan', this)">합천 오도산</button>
+        <button class="sample-chip" data-spot="gamaksan" onclick="selectStarSpot('gamaksan', this)">거창 감악산</button>
+        <button class="sample-chip" data-spot="bohyeon" onclick="selectStarSpot('bohyeon', this)">영천 보현산</button>
+        <button class="sample-chip" data-spot="biseul" onclick="selectStarSpot('biseul', this)">대구 비슬산</button>
+        <button class="sample-chip" data-spot="yeongyang" onclick="selectStarSpot('yeongyang', this)">영양 반딧불이(국제밤하늘)</button>
+        <button class="sample-chip" data-spot="manhang" onclick="selectStarSpot('manhang', this)">태백 만항재</button>
+        <button class="sample-chip" data-spot="anbandegi" onclick="selectStarSpot('anbandegi', this)">강릉 안반데기</button>
+        <button class="sample-chip" data-spot="jirisan" onclick="selectStarSpot('jirisan', this)">지리산 정령치</button>
+      </div>
 
-        <!-- Obstacle Silhouette -->
-        <polygon id="obstaclePolygon" points="210,115 250,70 290,115" fill="#475569" opacity="0.85"/>
-        <line id="obstacleAngleLine" x1="45" y1="110" x2="250" y2="70" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text id="obstacleAngleText" x="150" y="85" fill="#f87171" font-size="10" font-weight="800">차폐각 8.5°</text>
+      <!-- Interactive Leaflet Map Container -->
+      <div id="lpMap"></div>
 
-        <!-- Observer Camera -->
-        <g transform="translate(45, 96)">
-          <line x1="0" y1="14" x2="-6" y2="24" stroke="#f3b33d" stroke-width="2"/>
-          <line x1="0" y1="14" x2="6" y2="24" stroke="#f3b33d" stroke-width="2"/>
-          <rect x="-8" y="2" width="16" height="12" rx="2" fill="#f3b33d"/>
-        </g>
-        <!-- Ground Line -->
-        <line x1="10" y1="115" x2="350" y2="115" stroke="#647069" stroke-width="2"/>
-        <text x="45" y="130" text-anchor="middle" fill="#9ca8a1" font-size="9">내 관측점</text>
-        <text x="250" y="130" text-anchor="middle" fill="#9ca8a1" font-size="9" id="obstacleBaseLabel">주변 산/능선</text>
-      </svg>
+      <!-- Bortle Opacity & Legend -->
+      <div class="ctrl-row" style="margin-top:8px;">
+        <div class="ctrl-label-row">
+          <span>광해(Bortle) 오버레이 투명도</span>
+          <span id="lpOpacityLbl" style="color:var(--accent);">55%</span>
+        </div>
+        <input type="range" id="lpOpacitySlider" min="0" max="90" step="5" value="55" oninput="setLpOpacity(this.value)">
+      </div>
+      <div class="bortle-legend">
+        <div style="background:#111827;" title="Class 1"></div>
+        <div style="background:#1e3a8a;" title="Class 2"></div>
+        <div style="background:#2563eb;" title="Class 3"></div>
+        <div style="background:#16a34a;" title="Class 4"></div>
+        <div style="background:#eab308;" title="Class 5"></div>
+        <div style="background:#f97316;" title="Class 6"></div>
+        <div style="background:#dc2626;" title="Class 7"></div>
+        <div style="background:#f8fafc;" title="Class 8-9"></div>
+      </div>
+      <div class="bortle-labels">
+        <span>1-2 천문대급</span><span>3-4 은하수 선명</span><span>5-6 교외</span><span>7-9 도심 광해</span>
+      </div>
 
+      <!-- Selected Point Light Pollution Analysis -->
       <div class="metrics-grid">
-        <div class="metric-box">
-          <div class="metric-label">최소 필요 고도각</div>
-          <div class="metric-val highlight" id="spotMinAltVal">8.5<span class="metric-unit"> °</span></div>
+        <div class="metric-box"><div class="metric-label">예상 광해 등급</div><div class="metric-val highlight" id="mapBortleVal">Class 3</div></div>
+        <div class="metric-box"><div class="metric-label">예상 하늘밝기(SQM)</div><div class="metric-val" id="mapSqmVal">21.5</div></div>
+        <div class="metric-box"><div class="metric-label">주 광해 방향</div><div class="metric-val" id="mapDomeDirVal" style="font-size:13px;">동북(대구)</div></div>
+      </div>
+
+      <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:12px;padding:11px;margin-top:10px;">
+        <div style="font-size:13px;font-weight:800;color:#fff;" id="mapSelectedName">합천 오도산 전망대 (35.6761, 128.0558)</div>
+        <div style="font-size:11.5px;color:var(--text-sub);margin-top:4px;line-height:1.45;" id="mapSelectedAdvice"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;">
+          <a id="naverMapLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="font-size:11px;padding:8px 4px;">🗺️ 네이버지도</a>
+          <a id="tmapLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="font-size:11px;padding:8px 4px;">🚗 카카오맵</a>
+          <a id="viirsLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="font-size:11px;padding:8px 4px;">🛰️ 위성정밀광해</a>
         </div>
-        <div class="metric-box">
-          <div class="metric-label">은하수 중심 관측</div>
-          <div class="metric-val" id="spotMwStatusVal" style="color:var(--green);">가능 (양호)</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">광해 등급(보틀)</div>
-          <div class="metric-val highlight" id="spotBortleVal">Class 3</div>
-        </div>
+        <button class="btn-primary" style="margin-top:8px;padding:9px;font-size:12px;" onclick="syncMapLocToMoonPlanner()">🌙 이 좌표를 [달·별 플래너]에 적용하기</button>
       </div>
     </div>
 
-    <!-- 스팟 매개변수 입력 컨트롤 -->
+    <!-- 주변 산/건물 시야 차폐각 계산기 -->
     <div class="card">
-      <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;">📐 현장 지형 & 장애물 거리 입력</div>
+      <div class="callout-bar">
+        <div class="callout-title">주변 산·건물 시야 차폐각 계산</div>
+        <div class="callout-sub">내 관측점 고도와 앞쪽 산/건물의 높이를 넣어 은하수가 가리는지 체크합니다</div>
+      </div>
 
-      <div class="ctrl-row" style="margin-top:0;">
-        <div class="ctrl-label-row">
-          <span>내 위치 해발 고도</span>
-          <span id="myAltLabel" style="color:var(--accent);">1134 m</span>
-        </div>
-        <input type="range" id="myAltSlider" min="0" max="1500" step="20" value="1134" oninput="calculateSpotObstacle()">
+      <svg id="spotHorizonSvg" viewBox="0 0 360 130" style="width:100%;height:auto;background:rgba(0,0,0,0.35);border-radius:12px;border:1px solid var(--border);">
+        <line x1="20" y1="80" x2="340" y2="80" stroke="#475569" stroke-dasharray="3,3" stroke-width="1"/>
+        <text x="24" y="75" fill="#9ca8a1" font-size="9">10° 은하수 마지노선</text>
+        <line x1="20" y1="42" x2="340" y2="42" stroke="#475569" stroke-dasharray="3,3" stroke-width="1"/>
+        <text x="24" y="37" fill="#9ca8a1" font-size="9">27° 여름 은하수 최고고도</text>
+        <path d="M 60 108 Q 180 18 300 108" fill="none" stroke="rgba(243, 179, 61, 0.35)" stroke-width="14" stroke-linecap="round"/>
+        <polygon id="obstaclePolygon" points="200,108 250,70 300,108" fill="#475569" opacity="0.88"/>
+        <line id="obstacleAngleLine" x1="45" y1="103" x2="250" y2="70" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text id="obstacleAngleText" x="150" y="84" fill="#f87171" font-size="10" font-weight="800">차폐각 2.0°</text>
+        <g transform="translate(45, 90)">
+          <rect x="-8" y="2" width="16" height="11" rx="2" fill="#f3b33d"/>
+          <line x1="0" y1="13" x2="-6" y2="20" stroke="#f3b33d" stroke-width="2"/>
+          <line x1="0" y1="13" x2="6" y2="20" stroke="#f3b33d" stroke-width="2"/>
+        </g>
+        <line x1="10" y1="108" x2="350" y2="108" stroke="#647069" stroke-width="2"/>
+        <text x="45" y="122" text-anchor="middle" fill="#9ca8a1" font-size="9">내 위치</text>
+        <text x="250" y="122" text-anchor="middle" fill="#9ca8a1" font-size="9">앞쪽 산·건물</text>
+      </svg>
+
+      <div class="metrics-grid-2">
+        <div class="metric-box"><div class="metric-label">지형 차폐각</div><div class="metric-val highlight" id="spotMinAltVal">1.0<span class="metric-unit"> °</span></div></div>
+        <div class="metric-box"><div class="metric-label">은하수 관측 판정</div><div class="metric-val" id="spotMwStatusVal" style="color:var(--green);">가능 (시야 개방)</div></div>
       </div>
 
       <div class="ctrl-row">
-        <div class="ctrl-label-row">
-          <span>방해되는 산·건물과의 거리</span>
-          <span id="obsDistLabel" style="color:var(--accent);">3.0 km</span>
-        </div>
-        <input type="range" id="obsDistSlider" min="0.1" max="15" step="0.1" value="3.0" oninput="calculateSpotObstacle()">
+        <div class="ctrl-label-row"><span>내 위치 해발 고도</span><span id="myAltLabel" style="color:var(--accent);">1134 m</span></div>
+        <input type="range" id="myAltSlider" min="0" max="1500" step="10" value="1134" oninput="calculateSpotObstacle()">
       </div>
-
       <div class="ctrl-row">
-        <div class="ctrl-label-row">
-          <span>방해 산봉우리/건물 높이</span>
-          <span id="obsHeightLabel" style="color:var(--accent);">1350 m</span>
-        </div>
-        <input type="range" id="obsHeightSlider" min="0" max="1800" step="20" value="1350" oninput="calculateSpotObstacle()">
+        <div class="ctrl-label-row"><span>앞쪽 산·건물까지 거리</span><span id="obsDistLabel" style="color:var(--accent);">4.5 km</span></div>
+        <input type="range" id="obsDistSlider" min="0.05" max="15" step="0.05" value="4.5" oninput="calculateSpotObstacle()">
       </div>
-
       <div class="ctrl-row">
-        <div class="ctrl-label-row">
-          <span>인근 대도시(광해원)와의 거리</span>
-          <span id="cityDistLabel" style="color:var(--accent);">45 km (대구 기준)</span>
-        </div>
-        <input type="range" id="cityDistSlider" min="0" max="80" step="2" value="45" oninput="calculateSpotObstacle()">
-      </div>
-
-      <!-- 분석 결과 리포트 박스 -->
-      <div style="background:var(--bg-card-alt);border:1px solid var(--border);border-radius:14px;padding:12px;margin-top:14px;">
-        <div style="font-size:12px;font-weight:800;color:var(--accent);" id="spotReportHeader">합천 오도산 KT 송신소 분석 결과</div>
-        <div style="font-size:12px;color:var(--text-sub);margin-top:6px;line-height:1.5;" id="spotReportDetail">
-          내 고도가 높아 주변 능선이 8.5° 아래로 깔려 남쪽 은하수 중심부(최대 27°)가 완전히 트여 있습니다. 대구 도심과 45km 떨어져 보틀 Class 3 수준의 짙은 암흑 하늘을 제공합니다.
-        </div>
+        <div class="ctrl-label-row"><span>앞쪽 산·건물 높이(해발)</span><span id="obsHeightLabel" style="color:var(--accent);">1200 m</span></div>
+        <input type="range" id="obsHeightSlider" min="0" max="1800" step="10" value="1200" oninput="calculateSpotObstacle()">
       </div>
     </div>
   </div>
@@ -1002,8 +1076,8 @@
   <div id="tab-presets" class="tab-pane">
     <div class="card">
       <div class="callout-bar">
-        <div class="callout-title">복잡한 계산 없이 바로 베껴 쓰는 상황별 정답지</div>
-        <div class="callout-sub">현재 선택된 내 카메라/렌즈에 딱 맞춘 실전 레시피입니다</div>
+        <div class="callout-title">터치 한 번으로 바로 적용하는 내 장비 정답지</div>
+        <div class="callout-sub">Sony a5000(35mm / 55-210mm + 1.7× 컨버터) & 포켓 4 Pro 실전 레시피</div>
       </div>
       <div id="presetCardsContainer"></div>
     </div>
@@ -1015,14 +1089,14 @@
   <div class="modal-sheet" onclick="event.stopPropagation()">
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #111;padding-bottom:8px;">
       <div>
-        <div style="font-size:16px;font-weight:900;" id="hfCardTitle">과초점 카드</div>
+        <div style="font-size:16px;font-weight:900;">과초점 카드</div>
         <div style="font-size:11px;color:#555;" id="hfCardSub">Sony a5000 · 35mm f/1.8</div>
       </div>
-      <button onclick="closeHfCardModal()" style="border:none;background:#eee;border-radius:8px;padding:6px 10px;font-weight:800;">닫기</button>
+      <button onclick="closeHfCardModal()" style="border:none;background:#eee;border-radius:8px;padding:6px 10px;font-weight:800;cursor:pointer;">닫기</button>
     </div>
     <table class="hf-table" id="hfTableBody"></table>
-    <div style="font-size:11px;color:#555;margin-top:10px;">
-      💡 <b>H(과초점 거리)</b>에 초점을 맞추면 <b>½H 거리부터 무한대(∞)</b>까지 사진 전체가 선명하게 찍힙니다.
+    <div style="font-size:11px;color:#555;margin-top:10px;line-height:1.45;">
+      💡 <b>H(과초점 거리)</b>에 초점을 맞추면 <b>½H 거리부터 무한대(∞)</b>까지 사진 전체가 선명하게 담깁니다.
     </div>
   </div>
 </div>
@@ -1030,142 +1104,162 @@
 <!-- 설치법 모달 -->
 <div class="modal-backdrop" id="installModal" onclick="closeInstallModal()">
   <div class="modal-sheet" style="background:#181e1b;color:#fff;border:1px solid var(--accent);" onclick="event.stopPropagation()">
-    <div style="font-size:17px;font-weight:900;color:var(--accent);margin-bottom:8px;">📲 아이폰 17 프로 맥스 홈 화면 앱 등록법</div>
-    <ol style="font-size:13px;line-height:1.6;padding-left:18px;color:#e2e8f0;">
-      <li>지금 받으신 <b>index.html</b> 파일을 무료 호스팅(<b>tiiny.host</b> 또는 깃허브)에 올립니다.</li>
-      <li>생성된 주소를 아이폰 <b>Safari(사파리)</b>로 엽니다.</li>
-      <li>하단 가운데 <b>공유 버튼 [↑]</b>을 누른 뒤 <b>[홈 화면에 추가]</b>를 누르면 주소창 없는 진짜 풀스크린 <b>「딸-깍」</b> 어플로 설치됩니다!</li>
+    <div style="font-size:16px;font-weight:900;color:var(--accent);margin-bottom:8px;">📲 GitHub Pages 업데이트 & 아이폰 설치법</div>
+    <ol style="font-size:12.5px;line-height:1.65;padding-left:18px;color:#e2e8f0;">
+      <li>저장한 파일의 이름을 <b>index.html</b>로 바꿉니다.</li>
+      <li>깃허브 저장소(<b>lhc1239/ddalkkak</b>)에서 <b>[Add file] → [Upload files]</b>로 덮어쓰기 후 <b>[Commit changes]</b>를 누릅니다.</li>
+      <li>1~2분 뒤 아이폰 <b>Safari</b>에서 <b>lhc1239.github.io/ddalkkak/</b>에 접속 → 하단 <b>공유 [↑] → [홈 화면에 추가]</b>!</li>
+      <li>이미 홈 화면에 추가해 두셨다면 앱을 위로 쓸어 완전히 종료했다가 다시 켜면 v4로 자동 갱신됩니다.</li>
     </ol>
-    <button class="btn-primary" style="margin-top:10px;" onclick="closeInstallModal()">확인했습니다</button>
+    <button class="btn-primary" style="margin-top:8px;" onclick="closeInstallModal()">확인</button>
   </div>
 </div>
 
-<!-- Bottom Navigation Bar - 6 Tabs -->
+<!-- Bottom Navigation -->
 <nav class="bottom-nav">
   <div class="nav-inner">
-    <button class="nav-tab active" onclick="switchTab('meter', this)">
-      <span class="nav-icon">📷</span>
-      <span>찍어세팅</span>
+    <button class="nav-tab active" data-tab="meter" onclick="switchTab('meter', this)">
+      <span class="nav-icon">📷</span><span>노출계</span>
     </button>
-    <button class="nav-tab" onclick="switchTab('dof', this)">
-      <span class="nav-icon">🎯</span>
-      <span>초점심도</span>
+    <button class="nav-tab" data-tab="dof" onclick="switchTab('dof', this)">
+      <span class="nav-icon">🎯</span><span>심도·화각</span>
     </button>
-    <button class="nav-tab" onclick="switchTab('astro', this)">
-      <span class="nav-icon">✨</span>
-      <span>NPF노출</span>
+    <button class="nav-tab" data-tab="release" onclick="switchTab('release', this)">
+      <span class="nav-icon">⏱️</span><span>릴리즈·ND</span>
     </button>
-    <button class="nav-tab" onclick="switchTab('moon', this)">
-      <span class="nav-icon">🌙</span>
-      <span>달·별골든</span>
+    <button class="nav-tab" data-tab="moon" onclick="switchTab('moon', this)">
+      <span class="nav-icon">🌙</span><span>달·별</span>
     </button>
-    <button class="nav-tab" onclick="switchTab('spot', this)">
-      <span class="nav-icon">🗺️</span>
-      <span>스팟시야광해</span>
+    <button class="nav-tab" data-tab="spot" onclick="switchTab('spot', this)">
+      <span class="nav-icon">🗺️</span><span>광해지도</span>
     </button>
-    <button class="nav-tab" onclick="switchTab('presets', this)">
-      <span class="nav-icon">💡</span>
-      <span>정답지</span>
+    <button class="nav-tab" data-tab="presets" onclick="switchTab('presets', this)">
+      <span class="nav-icon">💡</span><span>정답지</span>
     </button>
   </div>
 </nav>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';document.head.appendChild(s);"></script>
 <script>
-// ==================== 1. 장비 데이터베이스 ====================
+// ==================== 1. 장비 데이터베이스 & 전역 상태 ====================
 const KITS = {
   a5000_35: {
     id: 'a5000_35',
     name: 'Sony a5000 + 35mm F1.8',
     sensorName: 'APS-C · 20.1MP · 3.92µm',
-    sensorWidth: 23.2,
-    sensorHeight: 15.4,
-    crop: 1.53,
-    coc: 0.019,
-    defaultMp: 20,
-    focal: 35,
-    minFocal: 35,
-    maxFocal: 35,
-    isZoom: false,
-    minAp: 1.8,
+    sensorWidth: 23.2, sensorHeight: 15.4,
+    crop: 1.53, coc: 0.019, defaultMp: 20,
+    baseFocal: 35, minFocal: 35, maxFocal: 35, isZoom: false,
     apertures: [1.8, 2.0, 2.8, 4.0, 5.6, 8.0, 11, 16, 22],
-    minFocus: 0.3,
-    hasOss: true,
-    type: 'mirrorless'
+    minFocus: 0.3, type: 'mirrorless'
   },
   a5000_55210: {
     id: 'a5000_55210',
     name: 'Sony a5000 + 55-210mm',
     sensorName: 'APS-C · 20.1MP · 3.92µm',
-    sensorWidth: 23.2,
-    sensorHeight: 15.4,
-    crop: 1.53,
-    coc: 0.019,
-    defaultMp: 20,
-    focal: 55,
-    minFocal: 55,
-    maxFocal: 210,
-    isZoom: true,
-    minAp: 4.5,
-    apertures: [4.5, 5.6, 6.3, 8.0, 11, 16, 22],
-    minFocus: 1.0,
-    hasOss: true,
-    type: 'mirrorless'
+    sensorWidth: 23.2, sensorHeight: 15.4,
+    crop: 1.53, coc: 0.019, defaultMp: 20,
+    baseFocal: 210, minFocal: 55, maxFocal: 210, isZoom: true,
+    apertures: [4.5, 5.0, 5.6, 6.3, 8.0, 11, 16, 22],
+    minFocus: 1.0, type: 'mirrorless'
   },
   pocket_20: {
     id: 'pocket_20',
     name: '오즈모 포켓 4P (20mm 광각)',
     sensorName: '1인치 센서 · 환산 20mm F2.0',
-    sensorWidth: 13.2,
-    sensorHeight: 8.8,
-    crop: 2.72,
-    coc: 0.011,
-    defaultMp: 12,
-    focal: 7.35,
-    minFocal: 7.35,
-    maxFocal: 7.35,
-    isZoom: false,
-    minAp: 2.0,
+    sensorWidth: 13.2, sensorHeight: 8.8,
+    crop: 2.72, coc: 0.011, defaultMp: 12,
+    baseFocal: 7.35, minFocal: 7.35, maxFocal: 7.35, isZoom: false,
     apertures: [2.0, 2.8, 4.0, 5.6, 8.0],
-    minFocus: 0.2,
-    hasOss: true,
-    type: 'gimbal'
+    minFocus: 0.2, type: 'gimbal'
   },
   pocket_60: {
     id: 'pocket_60',
     name: '오즈모 포켓 4P (60mm 망원)',
     sensorName: '1인치 센서 · 환산 60mm F2.8',
-    sensorWidth: 13.2,
-    sensorHeight: 8.8,
-    crop: 2.72,
-    coc: 0.011,
-    defaultMp: 12,
-    focal: 22.06,
-    minFocal: 22.06,
-    maxFocal: 22.06,
-    isZoom: false,
-    minAp: 2.8,
+    sensorWidth: 13.2, sensorHeight: 8.8,
+    crop: 2.72, coc: 0.011, defaultMp: 12,
+    baseFocal: 22.06, minFocal: 22.06, maxFocal: 22.06, isZoom: false,
     apertures: [2.8, 4.0, 5.6, 8.0],
-    minFocus: 0.4,
-    hasOss: true,
-    type: 'gimbal'
+    minFocus: 0.4, type: 'gimbal'
   }
 };
 
-let state = {
+const state = {
   kitKey: 'a5000_35',
+  tcEnabled: false,      // Sony VCL-HG1758 1.7x Teleconverter
+  baseFocal: 35,         // Lens physical focal length before 1.7x
   focusDist: 2.0,
   apIndex: 0,
-  focal: 35,
   mp: 20,
   ev: 6.5,
-  sceneTitle: '실내 카페/따뜻한 조명',
-  intent: 'bokeh'
+  sceneTitle: '실내 카페/아이',
+  intent: 'bokeh',
+  fovTarget: 'moon',
+  // Release & ND
+  releaseMode: 'bulb',   // 'bulb' | 'hold'
+  bulbTargetSec: 30,
+  holdShutterSec: 1.0,
+  holdGoalMin: 5,
+  ndStops: 10,
+  baseShutterIdx: 4,
+  stackChecks: {},
+  calibChecks: [false, false, false, false],
+  // Location & Astronomy (Default: Daegu)
+  lat: 35.8714,
+  lon: 128.6014,
+  locName: '대구광역시',
+  calFilter: 'all',
+  lastBlobUrl: null
 };
 
-function selectKit(kitKey) {
+const BASE_SHUTTERS = [
+  { label: '1/4000', val: 1/4000 }, { label: '1/2000', val: 1/2000 },
+  { label: '1/1000', val: 1/1000 }, { label: '1/500',  val: 1/500 },
+  { label: '1/250',  val: 1/250 },  { label: '1/125',  val: 1/125 },
+  { label: '1/60',   val: 1/60 },   { label: '1/30',   val: 1/30 },
+  { label: '1/15',   val: 1/15 },   { label: '1/8',    val: 1/8 },
+  { label: '1/4',    val: 1/4 },    { label: '0.5s',   val: 0.5 },
+  { label: '1s',     val: 1 },      { label: '2s',     val: 2 },
+  { label: '4s',     val: 4 }
+];
+
+// Helper: Effective focal length & valid apertures (respects 55-210mm variable max aperture & 1.7x TC with zero light loss!)
+function getEffectiveFocal() {
+  const mult = (state.kitKey === 'a5000_55210' && state.tcEnabled) ? 1.7 : 1.0;
+  return state.baseFocal * mult;
+}
+function getValidApertures() {
+  const kit = KITS[state.kitKey];
+  if (state.kitKey !== 'a5000_55210') return kit.apertures;
+  let minAp = 4.5;
+  if (state.baseFocal >= 165) minAp = 6.3;
+  else if (state.baseFocal >= 120) minAp = 5.6;
+  else if (state.baseFocal >= 80) minAp = 5.0;
+  return kit.apertures.filter(a => a >= minAp);
+}
+function getCurrentAperture() {
+  const aps = getValidApertures();
+  if (state.apIndex >= aps.length) state.apIndex = aps.length - 1;
+  if (state.apIndex < 0) state.apIndex = 0;
+  return aps[state.apIndex];
+}
+function getKitDisplayName() {
+  const kit = KITS[state.kitKey];
+  if (state.kitKey === 'a5000_55210' && state.tcEnabled) {
+    return `a5000 + 55-210mm + 1.7× (${Math.round(getEffectiveFocal())}mm)`;
+  }
+  if (state.kitKey === 'a5000_55210') {
+    return `a5000 + 55-210mm (${Math.round(state.baseFocal)}mm)`;
+  }
+  return kit.name;
+}
+
+function selectKit(kitKey, keepFocal) {
   state.kitKey = kitKey;
   const kit = KITS[kitKey];
-  state.focal = kit.focal;
+  if (!keepFocal) state.baseFocal = kit.baseFocal;
+  if (kitKey !== 'a5000_55210') state.tcEnabled = false;
   state.apIndex = 0;
   state.mp = kit.defaultMp;
   if (state.focusDist < kit.minFocus) state.focusDist = kit.minFocus;
@@ -1175,31 +1269,75 @@ function selectKit(kitKey) {
   });
   document.getElementById('activeSensorBadge').textContent = kit.sensorName;
   document.getElementById('zoomCtrlRow').style.display = kit.isZoom ? 'block' : 'none';
-
+  if (kit.isZoom) {
+    document.getElementById('focalSlider').value = state.baseFocal;
+  }
+  updateTcBarUI();
   updateAllCalculations();
+}
+
+function toggleTeleconverter() {
+  if (state.kitKey !== 'a5000_55210') return;
+  state.tcEnabled = !state.tcEnabled;
+  updateTcBarUI();
+  updateAllCalculations();
+}
+
+function updateTcBarUI() {
+  const bar = document.getElementById('tcToggleBar');
+  const sub = document.getElementById('tcStatusSub');
+  bar.classList.toggle('visible', state.kitKey === 'a5000_55210');
+  bar.classList.toggle('on', state.tcEnabled);
+  const eff = getEffectiveFocal();
+  const eq = Math.round(eff * 1.53);
+  if (state.tcEnabled) {
+    sub.innerHTML = `<b style="color:var(--accent);">장착 ON</b> · 실초점 ${eff.toFixed(0)}mm (환산 ${eq}mm · 조리개 손실 없음)`;
+  } else {
+    sub.textContent = `장착 OFF · 현재 ${Math.round(state.baseFocal)}mm (환산 ${Math.round(state.baseFocal*1.53)}mm)`;
+  }
 }
 
 function switchTab(tabId, btnEl) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tabId).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-  btnEl.classList.add('active');
+  if (btnEl) btnEl.classList.add('active');
+  else {
+    const match = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
+    if (match) match.classList.add('active');
+  }
+  if (tabId === 'spot') {
+    setTimeout(() => { initOrRefreshMap(); }, 60);
+  }
+  if (tabId === 'dof') {
+    drawFovCanvas();
+  }
 }
 
-// ==================== 2. AI 스마트 노출계 ====================
+function switchSubTab(parentKey, subId, btnEl) {
+  const parent = document.getElementById('tab-' + parentKey);
+  parent.querySelectorAll('.sub-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(subId).classList.add('active');
+  parent.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  if (subId === 'dof-fov') drawFovCanvas();
+}
+
+// ==================== 2. 스마트 노출계 & 안전 EXIF 파서 ====================
 const SAMPLE_SCENES = {
-  indoor_cafe: { title: '실내 카페 · 아이/인물 스냅', shutter: '1/60', iso: 400, ev: 6.5, intent: 'bokeh' },
-  day_portrait: { title: '야외 공원 · 주간 인물 스냅', shutter: '1/1000', iso: 100, ev: 13.0, intent: 'bokeh' },
-  day_landscape: { title: '맑은 날 주간 풍경/여행지', shutter: '1/500', iso: 100, ev: 14.5, intent: 'sharp' },
-  car_panning: { title: '와인딩/서킷 주행 차량 샷', shutter: '1/250', iso: 100, ev: 12.5, intent: 'action' },
-  night_street: { title: '밤거리 네온사인 & 야간 인물', shutter: '1/30', iso: 1600, ev: 3.5, intent: 'bokeh' },
-  milky_way: { title: '오도산/보현산 별·은하수 밤하늘', shutter: '15s', iso: 3200, ev: -3.0, intent: 'night' },
-  full_moon: { title: '밤하늘 달 표면 분화구 촬영', shutter: '1/250', iso: 100, ev: 13.5, intent: 'sharp' }
+  indoor_cafe:   { title: '실내 카페 · 아이/인물', shutter: '1/60', iso: 400, ev: 6.5, intent: 'bokeh' },
+  day_portrait:  { title: '야외 공원 · 주간 인물', shutter: '1/1000', iso: 100, ev: 13.0, intent: 'bokeh' },
+  day_landscape: { title: '맑은 날 주간 풍경', shutter: '1/500', iso: 100, ev: 14.5, intent: 'sharp' },
+  car_panning:   { title: '와인딩/서킷 주행 차량', shutter: '1/250', iso: 100, ev: 12.5, intent: 'action' },
+  night_street:  { title: '밤거리 네온 야경', shutter: '1/30', iso: 1600, ev: 3.5, intent: 'bokeh' },
+  milky_way:     { title: '오도산/보현산 별·은하수', shutter: '15s', iso: 3200, ev: -3.0, intent: 'night' },
+  full_moon:     { title: '보름달 분화구 초망원', shutter: '1/250', iso: 100, ev: 13.5, intent: 'sharp', forceKit: 'a5000_55210', forceTc: true },
+  deep_sky:      { title: '오리온 대성운 딥스카이', shutter: '1s', iso: 3200, ev: -3.5, intent: 'night', forceKit: 'a5000_55210', forceTc: true }
 };
 
 function loadSampleScene(key, chipEl) {
   if (chipEl) {
-    document.querySelectorAll('.sample-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('#tab-meter .sample-chip').forEach(c => c.classList.remove('active'));
     chipEl.classList.add('active');
   }
   const s = SAMPLE_SCENES[key];
@@ -1212,16 +1350,19 @@ function loadSampleScene(key, chipEl) {
   document.getElementById('exifEv').innerHTML = s.ev.toFixed(1) + '<span class="metric-unit"> EV</span>';
   document.getElementById('evRange').value = s.ev;
   document.getElementById('evSliderVal').textContent = 'EV ' + s.ev.toFixed(1);
-  document.getElementById('detectedSceneBadge').textContent = s.title + ' (EV ' + s.ev.toFixed(1) + ')';
+  document.getElementById('detectedSceneBadge').textContent = s.title + ` (EV ${s.ev.toFixed(1)})`;
 
   document.querySelectorAll('.intent-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.intent === state.intent);
   });
 
-  if (key === 'full_moon' || key === 'car_panning') {
-    if (state.kitKey === 'a5000_35') selectKit('a5000_55210');
+  if (s.forceKit) {
+    state.baseFocal = 210;
+    state.tcEnabled = !!s.forceTc;
+    selectKit(s.forceKit, true);
+  } else {
+    calculateMeterRecommendation();
   }
-  calculateMeterRecommendation();
 }
 
 function onManualEvChange(val) {
@@ -1235,114 +1376,136 @@ function onManualEvChange(val) {
   else if (state.ev <= 12) desc = '밝은 그늘/오후 햇살';
   else desc = '쾌청한 한낮 직사광선';
   state.sceneTitle = desc;
-  document.getElementById('detectedSceneBadge').textContent = desc + ' (EV ' + state.ev.toFixed(1) + ')';
+  document.getElementById('detectedSceneBadge').textContent = `${desc} (EV ${state.ev.toFixed(1)})`;
   calculateMeterRecommendation();
 }
 
 function setIntent(intentKey, btnEl) {
   state.intent = intentKey;
   document.querySelectorAll('.intent-btn').forEach(b => b.classList.remove('active'));
-  btnEl.classList.add('active');
+  if (btnEl) btnEl.classList.add('active');
   calculateMeterRecommendation();
 }
 
 function parseExifFromArrayBuffer(buffer) {
   try {
     const view = new DataView(buffer);
-    if (view.getUint16(0, false) !== 0xFFD8) return null;
+    if (view.byteLength < 12 || view.getUint16(0, false) !== 0xFFD8) return null;
     let offset = 2;
     const length = view.byteLength;
-    while (offset < length) {
+    while (offset + 4 < length) {
       const marker = view.getUint16(offset, false);
       offset += 2;
-      if (marker === 0xFFE1) {
-        if (view.getUint32(offset + 2, false) !== 0x45786966) return null;
+      if (marker === 0xFFDA || marker === 0xFFD9) break;
+      const segLen = view.getUint16(offset, false);
+      if (segLen < 2 || offset + segLen > length) break;
+      if (marker === 0xFFE1 && segLen > 10 && view.getUint32(offset + 2, false) === 0x45786966) {
         const tiffOffset = offset + 8;
         const little = view.getUint16(tiffOffset, false) === 0x4949;
         const firstIfd = tiffOffset + view.getUint32(tiffOffset + 4, little);
+        if (firstIfd + 2 > length) return null;
         const entries = view.getUint16(firstIfd, little);
         let exifIfdOffset = null;
         for (let i = 0; i < entries; i++) {
-          const entryOffset = firstIfd + 2 + i * 12;
-          if (view.getUint16(entryOffset, little) === 0x8769) {
-            exifIfdOffset = tiffOffset + view.getUint32(entryOffset + 8, little);
+          const eo = firstIfd + 2 + i * 12;
+          if (eo + 12 > length) break;
+          if (view.getUint16(eo, little) === 0x8769) {
+            exifIfdOffset = tiffOffset + view.getUint32(eo + 8, little);
+            break;
           }
         }
-        if (!exifIfdOffset) return null;
+        if (!exifIfdOffset || exifIfdOffset + 2 > length) return null;
         const exifEntries = view.getUint16(exifIfdOffset, little);
-        let result = {};
+        const result = {};
         for (let i = 0; i < exifEntries; i++) {
           const eo = exifIfdOffset + 2 + i * 12;
+          if (eo + 12 > length) break;
           const tag = view.getUint16(eo, little);
-          if (tag === 0x8827) { result.iso = view.getUint16(eo + 8, little); }
-          else if (tag === 0x829A) {
+          if (tag === 0x8827) {
+            result.iso = view.getUint16(eo + 8, little);
+          } else if (tag === 0x829A) {
             const ro = tiffOffset + view.getUint32(eo + 8, little);
-            result.exp = view.getUint32(ro, little) / view.getUint32(ro + 4, little);
+            if (ro + 8 <= length) {
+              const den = view.getUint32(ro + 4, little);
+              if (den > 0) result.exp = view.getUint32(ro, little) / den;
+            }
           } else if (tag === 0x829D) {
             const ro = tiffOffset + view.getUint32(eo + 8, little);
-            result.fnum = view.getUint32(ro, little) / view.getUint32(ro + 4, little);
+            if (ro + 8 <= length) {
+              const den = view.getUint32(ro + 4, little);
+              if (den > 0) result.fnum = view.getUint32(ro, little) / den;
+            }
           }
         }
         return result;
-      } else if ((marker & 0xFF00) !== 0xFF00) { break; }
-      else { offset += view.getUint16(offset, false); }
+      }
+      offset += segLen;
     }
   } catch (e) { return null; }
   return null;
 }
 
 function handlePhotoUpload(e) {
-  const file = e.target.files[0];
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // Reset so re-selecting same photo works in Safari
   if (!file) return;
+
   const reader = new FileReader();
   reader.onload = function(evt) {
-    const buffer = evt.target.result;
-    const exif = parseExifFromArrayBuffer(buffer);
-    const imgUrl = URL.createObjectURL(file);
+    const exif = parseExifFromArrayBuffer(evt.target.result);
+    if (state.lastBlobUrl) URL.revokeObjectURL(state.lastBlobUrl);
+    state.lastBlobUrl = URL.createObjectURL(file);
+
     const img = document.getElementById('photoPreview');
-    img.src = imgUrl;
-    document.getElementById('previewWrap').style.display = 'block';
-
     img.onload = function() {
-      const cvs = document.createElement('canvas');
-      cvs.width = 64; cvs.height = 64;
-      const ctx = cvs.getContext('2d');
-      ctx.drawImage(img, 0, 0, 64, 64);
-      const data = ctx.getImageData(0, 0, 64, 64).data;
-      let lumSum = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        lumSum += (0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]);
-      }
-      const avgLum = lumSum / (64 * 64);
+      let avgLum = 110;
+      try {
+        const cvs = document.createElement('canvas');
+        cvs.width = 64; cvs.height = 64;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(img, 0, 0, 64, 64);
+        const data = ctx.getImageData(0, 0, 64, 64).data;
+        let lumSum = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          lumSum += 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+        }
+        avgLum = lumSum / (64 * 64);
+      } catch (err) {}
 
-      if (exif && exif.exp && exif.iso) {
+      if (exif && exif.exp > 0 && exif.iso > 0) {
         const f = exif.fnum || 1.78;
         const ev100 = Math.log2((f * f) / exif.exp) - Math.log2(exif.iso / 100);
         state.ev = Math.max(-4, Math.min(15, Math.round(ev100 * 2) / 2));
-        const sLabel = exif.exp >= 1 ? exif.exp.toFixed(1) : '1/' + Math.round(1 / exif.exp);
+        const sLabel = exif.exp >= 1 ? exif.exp.toFixed(1) : '1/' + Math.max(1, Math.round(1 / exif.exp));
         document.getElementById('exifShutter').innerHTML = sLabel + '<span class="metric-unit"> s</span>';
         document.getElementById('exifIso').textContent = exif.iso;
+        state.sceneTitle = '아이폰 EXIF 실측 완료';
       } else {
         const estEv = Math.round(((avgLum / 255) * 14 - 1) * 2) / 2;
         state.ev = Math.max(-3, Math.min(15, estEv));
-        document.getElementById('exifShutter').innerHTML = '1/60<span class="metric-unit"> s</span>';
-        document.getElementById('exifIso').textContent = 400;
+        document.getElementById('exifShutter').innerHTML = (state.ev > 10 ? '1/500' : state.ev > 5 ? '1/60' : '1/15') + '<span class="metric-unit"> s</span>';
+        document.getElementById('exifIso').textContent = state.ev > 10 ? 100 : state.ev > 5 ? 400 : 1600;
+        state.sceneTitle = '사진 밝기(휘도) 자동 추정';
       }
       document.getElementById('exifEv').innerHTML = state.ev.toFixed(1) + '<span class="metric-unit"> EV</span>';
       document.getElementById('evRange').value = state.ev;
       document.getElementById('evSliderVal').textContent = 'EV ' + state.ev.toFixed(1);
+      document.getElementById('detectedSceneBadge').textContent = `${state.sceneTitle} (EV ${state.ev.toFixed(1)})`;
       calculateMeterRecommendation();
     };
+    img.src = state.lastBlobUrl;
+    document.getElementById('previewWrap').style.display = 'block';
   };
   reader.readAsArrayBuffer(file);
 }
 
 function formatShutterNice(sec) {
-  if (sec >= 1) return sec.toFixed(1).replace('.0', '') + 's';
+  if (!isFinite(sec) || sec <= 0) return '1/125s';
+  if (sec >= 1) return (sec >= 10 ? Math.round(sec) : sec.toFixed(1).replace('.0', '')) + 's';
   const denom = Math.round(1 / sec);
-  const std = [4000, 2000, 1000, 500, 250, 160, 125, 100, 80, 60, 50, 40, 30, 20, 15, 10, 8, 4, 2];
+  const std = [4000, 3200, 2500, 2000, 1600, 1250, 1000, 800, 640, 500, 400, 320, 250, 200, 160, 125, 100, 80, 60, 50, 40, 30, 20, 15, 10, 8, 4, 2];
   let best = std[0];
-  for (let d of std) {
+  for (const d of std) {
     if (Math.abs(d - denom) < Math.abs(best - denom)) best = d;
   }
   return '1/' + best + 's';
@@ -1350,47 +1513,47 @@ function formatShutterNice(sec) {
 
 function calculateMeterRecommendation() {
   const kit = KITS[state.kitKey];
+  const effFocal = getEffectiveFocal();
+  const eqFocal = effFocal * kit.crop;
+  const minAp = getValidApertures()[0];
   const ev = state.ev;
-  let mode = 'A 모드';
-  let f = kit.minAp;
-  let shutterSec = 1 / 125;
-  let iso = 100;
-  let tripod = '손각대 촬영';
-  let steps = [];
+
+  let mode = 'A 모드', f = minAp, shutterSec = 1/125, iso = 100, tripod = '손각대 가능';
+  const steps = [];
 
   if (state.intent === 'bokeh') {
     mode = kit.type === 'gimbal' ? 'PRO 수동' : 'A (조리개 우선)';
-    f = kit.minAp;
+    f = minAp;
   } else if (state.intent === 'sharp') {
     mode = kit.type === 'gimbal' ? 'PRO 수동' : 'A (조리개 우선)';
-    f = kit.type === 'gimbal' ? 4.0 : 8.0;
+    f = kit.type === 'gimbal' ? 4.0 : Math.max(minAp, 8.0);
   } else if (state.intent === 'action') {
     mode = kit.type === 'gimbal' ? 'PRO 수동' : 'S (셔터 우선)';
-    f = kit.minAp;
+    f = minAp;
   } else if (state.intent === 'night') {
     mode = 'M (수동 모드)';
-    f = kit.minAp;
+    f = minAp;
   }
 
+  const safeHandheldDenom = Math.max(60, Math.round(eqFocal * 1.15));
   if (state.intent === 'night' && ev <= 0) {
-    const npfSec = computeNpfSeconds(kit, state.focal, f, state.mp);
-    shutterSec = npfSec;
+    shutterSec = computeNpfSeconds(kit, effFocal, f, state.mp);
     iso = ev <= -2 ? 3200 : 1600;
-    tripod = '삼각대 필수';
+    tripod = '삼각대 + 릴리즈 필수';
   } else {
-    const minSafeShutter = state.intent === 'action' ? (1 / 500) : (1 / Math.max(60, Math.round(state.focal * kit.crop * 1.2)));
-    let rawT = (f * f) / Math.pow(2, ev);
+    const minSafeShutter = state.intent === 'action' ? (1 / Math.max(500, safeHandheldDenom)) : (1 / safeHandheldDenom);
+    const rawT = (f * f) / Math.pow(2, ev);
     if (rawT <= minSafeShutter) {
       shutterSec = Math.max(1 / 4000, rawT);
       iso = 100;
     } else {
       shutterSec = minSafeShutter;
-      let neededIso = 100 * (rawT / shutterSec);
+      const neededIso = 100 * (rawT / shutterSec);
       const maxCleanIso = kit.type === 'gimbal' ? 1600 : 3200;
       if (neededIso > maxCleanIso) {
         iso = maxCleanIso;
         shutterSec = rawT / (iso / 100);
-        if (shutterSec > 1 / 30) tripod = '삼각대/짐벌 권장';
+        if (shutterSec > 1 / safeHandheldDenom) tripod = '삼각대/릴리즈 권장';
       } else {
         const stdIsos = [100, 200, 400, 800, 1600, 3200];
         iso = stdIsos.find(x => x >= neededIso) || 3200;
@@ -1398,51 +1561,77 @@ function calculateMeterRecommendation() {
     }
   }
 
-  document.getElementById('recKitTitle').textContent = kit.name + ' 맞춤 세팅';
+  if (state.kitKey === 'a5000_55210' && state.tcEnabled && shutterSec > 1 / 500) {
+    tripod = '삼각대 + 릴리즈 필수';
+  }
+
+  document.getElementById('recKitTitle').textContent = getKitDisplayName();
   document.getElementById('recTripodBadge').textContent = tripod;
   document.getElementById('recMode').textContent = mode.split(' ')[0];
   document.getElementById('recAperture').textContent = 'F' + f.toFixed(1).replace('.0', '');
   document.getElementById('recShutter').textContent = formatShutterNice(shutterSec);
   document.getElementById('recIso').textContent = iso;
 
-  if (kit.type === 'mirrorless') {
-    steps.push(`카메라 윗면 모드 다이얼을 <b>[${mode}]</b>에 맞추세요.`);
-    steps.push(`오른쪽 원형 휠을 돌려 조리개를 <b>F${f}</b>${state.intent === 'action' || state.intent === 'night' ? `, 셔터속도를 <b>${formatShutterNice(shutterSec)}</b>` : ''}로 맞추세요.`);
-    steps.push(`휠 오른쪽 <b>[ISO]</b> 버튼을 눌러 <b>ISO ${iso}</b>으로 설정하세요.`);
-    if (state.intent === 'bokeh') {
-      steps.push(`피사체와 <b>1~2m 거리</b>로 다가간 뒤 눈에 초점을 맞추고 반셔터 후 딸-깍 찍으세요!`);
-    } else if (state.intent === 'sharp') {
-      steps.push(`풍경 전체가 쨍하게 나오는 조리개입니다. 멀리 있는 건물이나 나무에 초점을 맞추세요.`);
-    } else if (state.intent === 'action') {
-      steps.push(`초점 모드를 <b>AF-C(연속 초점)</b>, 드라이브 모드를 <b>연사</b>로 두세요.`);
-    } else {
-      steps.push(`삼각대에 올리고 <b>손떨림 보정(OSS) 해제 + 2초 셀프타이머</b>로 찍으세요.`);
-    }
+  const warnEl = document.getElementById('meterShakeWarn');
+  if (state.kitKey === 'a5000_55210' && state.tcEnabled) {
+    warnEl.style.display = 'block';
+    warnEl.innerHTML = `⚠️ <b>1.7× 초망원(환산 ${Math.round(eqFocal)}mm) 주의:</b> 미세한 손떨림도 크게 번집니다. 손각대는 <b>1/${Math.max(500, Math.round(eqFocal))}초 이상</b> 유지하고, 달·별 촬영 시엔 반드시 <b>삼각대 + 유선 릴리즈 + OSS(손떨방) OFF</b>로 찍으세요!`;
   } else {
-    steps.push(`오즈모 포켓 4 Pro 화면 우측 하단 <b>[PRO]</b> 버튼을 켜서 수동 세팅을 활성화하세요.`);
-    steps.push(`화각을 <b>${kit.id === 'pocket_20' ? '20mm 광각(1x)' : '60mm 망원(3x)'}</b>으로 전환하고 노출을 <b>${formatShutterNice(shutterSec)} · ISO ${iso}</b>에 맞추세요.`);
+    warnEl.style.display = 'none';
   }
 
-  document.getElementById('recStepsList').innerHTML = steps.map((s, idx) => `<li><span class="step-badge">${idx + 1}</span><span>${s}</span></li>`).join('');
+  if (kit.type === 'mirrorless') {
+    steps.push(`상단 모드 다이얼을 <b>[${mode}]</b>로 돌리세요.`);
+    steps.push(`우측 휠로 조리개 <b>F${f}</b>${(state.intent === 'action' || state.intent === 'night') ? `, 셔터 <b>${formatShutterNice(shutterSec)}</b>` : ''}에 맞추세요.`);
+    steps.push(`<b>[ISO]</b>를 눌러 <b>ISO ${iso}</b> 설정 (주간 스냅은 ISO AUTO도 편해요).`);
+    if (state.intent === 'night') {
+      steps.push(`삼각대 고정 후 <b>유선 릴리즈</b>로 진동 없이 촬영하세요. (${state.tcEnabled ? '357mm 초망원은 1초 내외 연사 스태킹 추천!' : 'OSS 끄기 권장'})`);
+    } else if (state.intent === 'action') {
+      steps.push(`초점 모드 <b>AF-C(연속 초점)</b> + 드라이브 <b>연사</b>로 맞추면 움직이는 피사체도 선명합니다.`);
+    } else if (state.intent === 'bokeh') {
+      steps.push(`피사체 눈에 초점을 맞추고 반셔터 후 딸-깍 찍으세요.`);
+    } else {
+      steps.push(`달 촬영이라면 초점을 <b>MF(수동) + 피킹/확대</b>로 달 테두리에 칼같이 맞추세요.`);
+    }
+  } else {
+    steps.push(`포켓 4 Pro 화면 우측 하단 <b>[PRO]</b> 모드 활성화 → 화각 <b>${kit.id === 'pocket_20' ? '20mm(1x)' : '60mm(3x)'}</b> 선택.`);
+    steps.push(`셔터 <b>${formatShutterNice(shutterSec)}</b> · <b>ISO ${iso}</b>로 맞추고, 주간 영상은 ND 필터를 장착하세요.`);
+  }
+  document.getElementById('recStepsList').innerHTML = steps.map((s, i) => `<li><span class="step-badge">${i+1}</span><span>${s}</span></li>`).join('');
 }
 
-// ==================== 3. 초점·심도 계산 ====================
-function stepFocus(delta) {
-  const kit = KITS[state.kitKey];
-  state.focusDist = Math.max(kit.minFocus, Math.min(20, Math.round((state.focusDist + delta) * 100) / 100));
-  document.getElementById('focusSlider').value = state.focusDist;
+// ==================== 3. 초점·심도 & 초망원 뷰파인더 ====================
+function sliderToFocusDist(v) {
+  const minF = KITS[state.kitKey].minFocus;
+  const maxF = (state.kitKey === 'a5000_55210') ? 450 : 60;
+  return minF * Math.pow(maxF / minF, v / 100);
+}
+function focusDistToSlider(d) {
+  const minF = KITS[state.kitKey].minFocus;
+  const maxF = (state.kitKey === 'a5000_55210') ? 450 : 60;
+  const clamped = Math.max(minF, Math.min(maxF, d));
+  return 100 * Math.log(clamped / minF) / Math.log(maxF / minF);
+}
+function onFocusSliderInput(v) {
+  state.focusDist = Math.round(sliderToFocusDist(parseFloat(v)) * 100) / 100;
   updateDofUI();
 }
-function setFocusDist(val) { state.focusDist = parseFloat(val); updateDofUI(); }
-function stepAperture(delta) {
-  const kit = KITS[state.kitKey];
-  state.apIndex = Math.max(0, Math.min(kit.apertures.length - 1, state.apIndex + delta));
-  updateDofUI(); updateAstroUI();
+function stepFocus(dir) {
+  const minF = KITS[state.kitKey].minFocus;
+  const step = state.focusDist < 2 ? 0.1 : state.focusDist < 10 ? 0.5 : state.focusDist < 50 ? 2 : 10;
+  state.focusDist = Math.max(minF, Math.min(500, Math.round((state.focusDist + dir * step) * 100) / 100));
+  document.getElementById('focusSlider').value = focusDistToSlider(state.focusDist);
+  updateDofUI();
 }
-function setFocalLen(val) {
-  state.focal = parseFloat(val);
-  document.getElementById('focalLabel').textContent = state.focal + ' mm';
-  updateDofUI(); updateAstroUI();
+function stepAperture(delta) {
+  const aps = getValidApertures();
+  state.apIndex = Math.max(0, Math.min(aps.length - 1, state.apIndex + delta));
+  updateAllCalculations();
+}
+function setBaseFocalLen(val) {
+  state.baseFocal = parseFloat(val);
+  updateTcBarUI();
+  updateAllCalculations();
 }
 
 function computeDof(f_mm, N, s_m, coc_mm) {
@@ -1454,372 +1643,1207 @@ function computeDof(f_mm, N, s_m, coc_mm) {
     H_m: H / 1000,
     near_m: near / 1000,
     far_m: far === Infinity ? Infinity : far / 1000,
-    total_m: far === Infinity ? Infinity : (far - near) / 1000,
-    behind_m: far === Infinity ? Infinity : (far - s) / 1000
+    total_m: far === Infinity ? Infinity : (far - near) / 1000
   };
+}
+
+function fmtDist(m) {
+  if (m === Infinity) return '∞';
+  if (m < 1) return (m * 100).toFixed(0) + '<span class="metric-unit"> cm</span>';
+  if (m >= 100) return m.toFixed(0) + '<span class="metric-unit"> m</span>';
+  return m.toFixed(2) + '<span class="metric-unit"> m</span>';
 }
 
 function updateDofUI() {
   const kit = KITS[state.kitKey];
-  const N = kit.apertures[state.apIndex];
-  const res = computeDof(state.focal, N, state.focusDist, kit.coc);
+  const effFocal = getEffectiveFocal();
+  const N = getCurrentAperture();
+  const res = computeDof(effFocal, N, state.focusDist, kit.coc);
 
-  document.getElementById('focusRangeLabel').textContent = state.focusDist.toFixed(2) + ' m';
-  document.getElementById('focusNumDisp').textContent = state.focusDist.toFixed(2);
+  document.getElementById('focusRangeLabel').textContent = state.focusDist >= 100 ? state.focusDist.toFixed(0) + ' m' : state.focusDist.toFixed(2) + ' m';
+  document.getElementById('focusNumDisp').textContent = state.focusDist >= 100 ? state.focusDist.toFixed(0) : state.focusDist.toFixed(2);
+  document.getElementById('focusSlider').value = focusDistToSlider(state.focusDist);
   document.getElementById('apLabel').textContent = 'f/' + N;
   document.getElementById('apNumDisp').textContent = N;
 
-  document.getElementById('dofNear').innerHTML = res.near_m.toFixed(2) + '<span class="metric-unit"> m</span>';
-  document.getElementById('dofFocus').innerHTML = state.focusDist.toFixed(2) + '<span class="metric-unit"> m</span>';
-  document.getElementById('dofFar').innerHTML = (res.far_m === Infinity ? '∞' : res.far_m.toFixed(2) + '<span class="metric-unit"> m</span>');
-  document.getElementById('dofHyper').innerHTML = res.H_m.toFixed(2) + '<span class="metric-unit"> m</span>';
+  if (kit.isZoom) {
+    document.getElementById('focalLabel').textContent = state.tcEnabled
+      ? `${state.baseFocal}mm × 1.7 = ${Math.round(effFocal)}mm`
+      : `${state.baseFocal} mm`;
+    document.getElementById('zoomTcBadge').textContent = state.tcEnabled ? '(1.7× 적용중)' : '';
+  }
 
-  let totalStr = '';
+  document.getElementById('dofNear').innerHTML = fmtDist(res.near_m);
+  document.getElementById('dofFocus').innerHTML = fmtDist(state.focusDist);
+  document.getElementById('dofFar').innerHTML = fmtDist(res.far_m);
+  document.getElementById('dofHyper').innerHTML = fmtDist(res.H_m);
+  document.getElementById('dofEqFocal').innerHTML = Math.round(effFocal * kit.crop) + '<span class="metric-unit"> mm</span>';
+
+  let totalPill = '';
   if (res.total_m === Infinity) {
-    totalStr = '∞';
+    totalPill = '∞까지 선명';
     document.getElementById('dofTotal').innerHTML = '∞';
-    document.getElementById('dofBehind').innerHTML = '∞';
-    document.getElementById('dofHeadline').textContent = `${(res.near_m * 100).toFixed(0)} cm부터 무한대까지 선명: 과초점 거리에 맞춰져 있음`;
-    document.getElementById('dofSubline').textContent = '피사체 뒤로 지평선까지 모두 선명한 팬포커스 상태입니다';
+    document.getElementById('dofHeadline').textContent = `${res.near_m < 1 ? (res.near_m*100).toFixed(0)+' cm' : res.near_m.toFixed(1)+' m'}부터 무한대까지 선명 (과초점)`;
+    document.getElementById('dofSubline').textContent = '풍경·별 촬영 시 전경부터 지평선까지 쨍하게 담기는 구간입니다';
   } else if (res.total_m < 1) {
     const cm = (res.total_m * 100).toFixed(1);
-    totalStr = cm + ' cm';
+    totalPill = cm + ' cm';
     document.getElementById('dofTotal').innerHTML = cm + '<span class="metric-unit"> cm</span>';
-    document.getElementById('dofBehind').innerHTML = (res.behind_m * 100).toFixed(0) + '<span class="metric-unit"> cm</span>';
-    document.getElementById('dofHeadline').textContent = `선명한 범위는 ${cm} cm뿐: 눈에 초점을 맞추세요`;
-    document.getElementById('dofSubline').textContent = '심도가 얕아 피사체만 부각되고 배경이 예쁘게 흐려집니다';
+    document.getElementById('dofHeadline').textContent = `선명한 범위는 ${cm} cm뿐: 눈에 정확히 초점을 맞추세요`;
+    document.getElementById('dofSubline').textContent = '심도가 얕아 배경이 크림처럼 부드럽게 흐려집니다';
   } else {
-    totalStr = res.total_m.toFixed(2) + ' m';
-    document.getElementById('dofTotal').innerHTML = res.total_m.toFixed(2) + '<span class="metric-unit"> m</span>';
-    document.getElementById('dofBehind').innerHTML = res.behind_m.toFixed(2) + '<span class="metric-unit"> m</span>';
-    document.getElementById('dofHeadline').textContent = `선명한 범위는 ${totalStr}: 인물과 주변이 함께 선명해요`;
+    const mStr = res.total_m >= 50 ? res.total_m.toFixed(0) + ' m' : res.total_m.toFixed(2) + ' m';
+    totalPill = mStr;
+    document.getElementById('dofTotal').innerHTML = mStr;
+    document.getElementById('dofHeadline').textContent = `선명한 범위는 ${mStr}: 피사체와 주변이 함께 선명해요`;
+    document.getElementById('dofSubline').textContent = `전방 ${res.near_m.toFixed(1)}m ~ 후방 ${res.far_m.toFixed(1)}m 구간이 선명합니다`;
   }
 
   const distToX = (d) => {
     if (d === Infinity) return 345;
-    const clamped = Math.max(0.25, Math.min(12, d));
-    return 55 + (Math.log(clamped / 0.25) / Math.log(12 / 0.25)) * 275;
+    const clamped = Math.max(0.25, Math.min(80, d));
+    return 52 + (Math.log(clamped / 0.25) / Math.log(80 / 0.25)) * 278;
   };
   const personX = distToX(state.focusDist);
   const nearX = distToX(res.near_m);
   const farX = distToX(res.far_m);
-  const boxW = Math.max(10, farX - nearX);
+  const boxW = Math.max(8, farX - nearX);
 
-  document.getElementById('svgPerson').setAttribute('transform', `translate(${personX}, 62)`);
+  document.getElementById('svgPerson').setAttribute('transform', `translate(${personX}, 58)`);
   document.getElementById('svgSharpZone').setAttribute('x', nearX);
   document.getElementById('svgSharpZone').setAttribute('width', boxW);
-  const pillX = Math.min(275, Math.max(45, nearX + boxW / 2 - 38));
+  const pillX = Math.min(272, Math.max(46, nearX + boxW / 2 - 38));
   document.getElementById('svgSharpPill').setAttribute('x', pillX);
-  document.getElementById('svgSharpText').setAttribute('x', pillX + 35);
-  document.getElementById('svgSharpText').textContent = res.total_m === Infinity ? '∞까지 선명' : totalStr + ' 선명';
+  document.getElementById('svgSharpText').setAttribute('x', pillX + 38);
+  document.getElementById('svgSharpText').textContent = totalPill;
 }
 
 function snapToHyperfocal() {
   const kit = KITS[state.kitKey];
-  const N = kit.apertures[state.apIndex];
-  const res = computeDof(state.focal, N, state.focusDist, kit.coc);
-  state.focusDist = Math.min(20, Math.round((res.H_m + 0.05) * 100) / 100);
-  document.getElementById('focusSlider').value = state.focusDist;
+  const res = computeDof(getEffectiveFocal(), getCurrentAperture(), state.focusDist, kit.coc);
+  state.focusDist = Math.min(500, Math.round((res.H_m + 0.05) * 100) / 100);
   updateDofUI();
 }
 
 function openHfCardModal() {
   const kit = KITS[state.kitKey];
-  document.getElementById('hfCardSub').textContent = `${kit.name} · ${Math.round(state.focal)}mm · 착란원 ${kit.coc}mm`;
-  let rows = `<tr><th>조리개</th><th>과초점 H (m)</th><th>선명 시작 ½H (m)</th><th>후방 한계</th></tr>`;
-  kit.apertures.forEach(ap => {
-    const d = computeDof(state.focal, ap, 2.0, kit.coc);
-    rows += `<tr><td><b>f/${ap}</b></td><td>${d.H_m.toFixed(2)} m</td><td>${(d.H_m / 2).toFixed(2)} m</td><td>∞ (무한대)</td></tr>`;
+  const effFocal = getEffectiveFocal();
+  document.getElementById('hfCardSub').textContent = `${getKitDisplayName()} · 착란원 ${kit.coc}mm`;
+  let rows = `<tr><th>조리개</th><th>과초점 H</th><th>선명 시작 ½H</th><th>후방</th></tr>`;
+  getValidApertures().forEach(ap => {
+    const d = computeDof(effFocal, ap, 2.0, kit.coc);
+    const fmt = (v) => v >= 100 ? v.toFixed(0)+' m' : v.toFixed(2)+' m';
+    rows += `<tr><td><b>f/${ap}</b></td><td>${fmt(d.H_m)}</td><td>${fmt(d.H_m/2)}</td><td>∞</td></tr>`;
   });
   document.getElementById('hfTableBody').innerHTML = rows;
   document.getElementById('hfModal').classList.add('open');
 }
 function closeHfCardModal() { document.getElementById('hfModal').classList.remove('open'); }
 
-// ==================== 4. 별·은하수 NPF ====================
-function computeNpfSeconds(kit, focal_mm, N, mp) {
-  const aspect = kit.sensorWidth / kit.sensorHeight;
-  const pxWidth = Math.sqrt(mp * 1000000 * aspect);
-  const pitch_um = (kit.sensorWidth / pxWidth) * 1000;
-  const npf = (16.856 * N + 0.0997 * focal_mm + 13.713 * pitch_um) / focal_mm;
-  return Math.round(npf * 10) / 10;
+// Super-telephoto Viewfinder Simulator
+function selectFovTarget(target, chipEl) {
+  state.fovTarget = target;
+  document.querySelectorAll('#dof-fov .sample-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  drawFovCanvas();
 }
 
+function quickFovPreset(kitKey, focal, tcOn) {
+  state.baseFocal = focal;
+  state.tcEnabled = tcOn;
+  selectKit(kitKey, true);
+  drawFovCanvas();
+}
+
+function drawFovCanvas() {
+  const cvs = document.getElementById('fovCanvas');
+  if (!cvs) return;
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width, H = cvs.height;
+  const kit = KITS[state.kitKey];
+  const effF = getEffectiveFocal();
+  const eqF = effF * kit.crop;
+
+  const fovH = 2 * Math.atan(kit.sensorWidth / (2 * effF)) * 180 / Math.PI;
+  const fovV = 2 * Math.atan(kit.sensorHeight / (2 * effF)) * 180 / Math.PI;
+
+  const moonAng = 0.52;
+  const sensorPxH = Math.round(Math.sqrt(state.mp * 1e6 * (kit.sensorWidth / kit.sensorHeight)));
+  const moonPx = Math.round((moonAng / fovH) * sensorPxH);
+
+  document.getElementById('fovFocalVal').innerHTML = `${Math.round(effF)} / ${Math.round(eqF)}<span class="metric-unit"> mm</span>`;
+  document.getElementById('fovDegVal').textContent = `${fovH.toFixed(1)}° × ${fovV.toFixed(1)}°`;
+  document.getElementById('fovMoonPxVal').innerHTML = `${moonPx}<span class="metric-unit"> px</span>`;
+
+  // Background sky
+  ctx.fillStyle = '#070b10';
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle background stars (deterministic)
+  for (let i = 0; i < 65; i++) {
+    const sx = ((i * 73 + 17) % 100) / 100 * W;
+    const sy = ((i * 41 + 29) % 100) / 100 * H;
+    const sr = (i % 5 === 0) ? 1.4 : 0.8;
+    ctx.fillStyle = `rgba(255,255,255,${0.25 + (i % 4) * 0.15})`;
+    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Rule-of-thirds viewfinder grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(W/3, 0); ctx.lineTo(W/3, H);
+  ctx.moveTo(2*W/3, 0); ctx.lineTo(2*W/3, H);
+  ctx.moveTo(0, H/3); ctx.lineTo(W, H/3);
+  ctx.moveTo(0, 2*H/3); ctx.lineTo(W, 2*H/3);
+  ctx.stroke();
+
+  const pxPerDeg = W / fovH;
+  const cx = W / 2, cy = H / 2;
+  let headline = '';
+
+  if (state.fovTarget === 'moon') {
+    const r = Math.max(2.5, (moonAng * pxPerDeg) / 2);
+    const pctV = Math.round((moonAng / fovV) * 100);
+    headline = `보름달이 화면 세로의 약 ${pctV}% (가로 ${moonPx}px) 크기로 담깁니다`;
+    const grad = ctx.createRadialGradient(cx - r*0.25, cy - r*0.25, r*0.1, cx, cy, r);
+    grad.addColorStop(0, '#fffbeb');
+    grad.addColorStop(0.7, '#e5dcc5');
+    grad.addColorStop(1, '#9ca3af');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    // Subtle craters
+    ctx.fillStyle = 'rgba(75,85,99,0.28)';
+    ctx.beginPath(); ctx.arc(cx - r*0.3, cy - r*0.15, r*0.22, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + r*0.22, cy + r*0.2, r*0.28, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + r*0.1, cy - r*0.35, r*0.16, 0, Math.PI*2); ctx.fill();
+  } else if (state.fovTarget === 'm42') {
+    const r = Math.max(4, (1.1 * pxPerDeg) / 2);
+    const pctV = Math.min(100, Math.round((1.1 / fovV) * 100));
+    headline = `오리온 대성운(M42)이 세로의 약 ${pctV}% 비중으로 담깁니다 ${effF >= 200 ? '— 초망원 추천!' : '— 210+1.7× 권장'}`;
+    const grad = ctx.createRadialGradient(cx, cy, r*0.08, cx, cy, r);
+    grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+    grad.addColorStop(0.3, 'rgba(244,114,182,0.75)');
+    grad.addColorStop(0.65, 'rgba(139,92,246,0.35)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+  } else if (state.fovTarget === 'm31') {
+    const rx = Math.max(6, (3.0 * pxPerDeg) / 2);
+    const ry = Math.max(2.5, (1.0 * pxPerDeg) / 2);
+    const pctH = Math.min(100, Math.round((3.0 / fovH) * 100));
+    headline = `안드로메다 은하(M31)가 가로의 약 ${pctH}% 크기로 담깁니다`;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.45);
+    const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, rx);
+    grad.addColorStop(0, 'rgba(255,250,225,0.95)');
+    grad.addColorStop(0.35, 'rgba(251,191,36,0.45)');
+    grad.addColorStop(0.75, 'rgba(96,165,250,0.2)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.scale(1, ry / rx);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  } else if (state.fovTarget === 'm45') {
+    const spread = Math.max(8, (1.8 * pxPerDeg) / 2);
+    headline = `플레이아데스 성단(M45)이 세로의 약 ${Math.min(100, Math.round((1.8/fovV)*100))}% 크기로 담깁니다`;
+    const pts = [[-0.5,-0.2],[-0.2,0.1],[0.05,-0.15],[0.3,0.05],[0.45,-0.3],[0.15,0.35],[-0.35,0.3]];
+    pts.forEach(([px, py]) => {
+      const gx = cx + px * spread, gy = cy + py * spread;
+      const g = ctx.createRadialGradient(gx, gy, 1, gx, gy, Math.max(5, spread*0.32));
+      g.addColorStop(0, '#fff');
+      g.addColorStop(0.35, 'rgba(96,165,250,0.6)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(gx, gy, Math.max(5, spread*0.32), 0, Math.PI*2); ctx.fill();
+    });
+  } else {
+    const bandW = Math.max(18, 12 * pxPerDeg);
+    headline = fovH >= 30 ? '은하수 중심부 코어와 지평선을 여유롭게 담는 광각/표준 화각입니다' : '은하수 전체보다 성운·성단 클로즈업에 어울리는 망원 화각입니다';
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.55);
+    const grad = ctx.createLinearGradient(-bandW, 0, bandW, 0);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.35, 'rgba(243,179,61,0.22)');
+    grad.addColorStop(0.5, 'rgba(255,245,214,0.45)');
+    grad.addColorStop(0.65, 'rgba(147,197,253,0.22)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(-bandW, -H, bandW*2, H*2);
+    ctx.restore();
+  }
+
+  // HUD overlay text
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(8, 8, 175, 22);
+  ctx.fillStyle = '#f3b33d';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText(`${Math.round(effF)}mm (환산 ${Math.round(eqF)}mm) · F${getCurrentAperture()}`, 14, 23);
+
+  document.getElementById('fovHeadline').textContent = headline;
+
+  const shakeEl = document.getElementById('fovShakeWarn');
+  if (eqF >= 250) {
+    shakeEl.style.display = 'block';
+    shakeEl.innerHTML = `🔭 <b>초망원 촬영 팁 (환산 ${Math.round(eqF)}mm):</b> 삼각대 고정 + <b>유선 릴리즈</b> + <b>OSS 해제</b>가 필수입니다. 달은 지구 자전 때문에 뷰파인더를 약 2분 만에 빠져나가므로 구도를 살짝 여유 있게 잡으세요.`;
+  } else {
+    shakeEl.style.display = 'none';
+  }
+}
+
+// ==================== 4. 유선 릴리즈(홀드) 벌브 · 연사 · ND · 포커스 스태킹 ====================
+let audioCtx = null;
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+function playBeep(freq, durMs) {
+  try {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + durMs / 1000);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + durMs / 1000);
+  } catch (e) {}
+}
+
+let timerState = { running: false, endTimeMs: 0, totalSec: 30, intervalId: null, lastBeepSec: -1 };
+
+function setReleaseMode(mode) {
+  resetMainTimer();
+  state.releaseMode = mode;
+  document.getElementById('modeBulbBtn').className = mode === 'bulb' ? 'btn-primary' : 'btn-secondary';
+  document.getElementById('modeHoldBtn').className = mode === 'hold' ? 'btn-primary' : 'btn-secondary';
+  document.getElementById('modeBulbBtn').style.padding = '9px';
+  document.getElementById('modeHoldBtn').style.padding = '9px';
+  document.getElementById('bulbControlsBox').style.display = mode === 'bulb' ? 'block' : 'none';
+  document.getElementById('holdControlsBox').style.display = mode === 'hold' ? 'block' : 'none';
+  updateHoldCalcUI();
+  updateTimerIdleDisplay();
+}
+
+function setBulbSeconds(sec, chipEl) {
+  resetMainTimer();
+  state.bulbTargetSec = Math.max(1, Math.min(3600, Math.round(sec)));
+  document.getElementById('bulbTargetDisp').textContent = state.bulbTargetSec;
+  document.querySelectorAll('#bulbControlsBox .sample-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  updateTimerIdleDisplay();
+}
+function stepBulbSec(d) { setBulbSeconds(state.bulbTargetSec + d); }
+
+function syncHoldToNpf() {
+  const npf = computeNpfSeconds(KITS[state.kitKey], getEffectiveFocal(), getCurrentAperture(), state.mp);
+  state.holdShutterSec = Math.max(0.5, Math.round(npf * 2) / 2);
+  updateHoldCalcUI();
+  updateTimerIdleDisplay();
+}
+function stepHoldShutter(d) {
+  state.holdShutterSec = Math.max(0.5, Math.min(30, Math.round((state.holdShutterSec + d) * 10) / 10));
+  updateHoldCalcUI();
+  updateTimerIdleDisplay();
+}
+function setHoldGoalMin(min, chipEl) {
+  state.holdGoalMin = min;
+  document.querySelectorAll('#holdControlsBox .sample-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  updateHoldCalcUI();
+  updateTimerIdleDisplay();
+}
+
+function getHoldTotalWallSeconds() {
+  const goalSec = state.holdGoalMin * 60;
+  const shots = Math.max(1, Math.ceil(goalSec / state.holdShutterSec));
+  return Math.round(shots * (state.holdShutterSec + 0.4));
+}
+
+function updateHoldCalcUI() {
+  const npf = computeNpfSeconds(KITS[state.kitKey], getEffectiveFocal(), getCurrentAperture(), state.mp);
+  document.getElementById('holdNpfHint').textContent = npf.toFixed(1) + '초';
+  document.getElementById('holdShutterDisp').textContent = state.holdShutterSec.toFixed(1);
+  const goalSec = state.holdGoalMin * 60;
+  const shots = Math.max(1, Math.ceil(goalSec / state.holdShutterSec));
+  const totalWall = Math.round(shots * (state.holdShutterSec + 0.4));
+  const m = Math.floor(totalWall / 60), s = totalWall % 60;
+  const gb = ((shots * 20) / 1024).toFixed(1); // ~20MB per a5000 ARW RAW
+
+  document.getElementById('holdTotalExpLbl').textContent = `${state.holdGoalMin}분 (${goalSec}초 누적)`;
+  document.getElementById('holdShotsVal').innerHTML = `${shots}<span class="metric-unit"> 장</span>`;
+  document.getElementById('holdDurationVal').textContent = `${m}분 ${s}초`;
+  document.getElementById('holdStorageVal').innerHTML = `${gb}<span class="metric-unit"> GB</span>`;
+}
+
+function fmtMMSS(sec) {
+  const s = Math.max(0, Math.ceil(sec));
+  const mm = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+
+function updateTimerIdleDisplay() {
+  if (timerState.running) return;
+  const sec = state.releaseMode === 'bulb' ? state.bulbTargetSec : getHoldTotalWallSeconds();
+  document.getElementById('timerDisplay').textContent = fmtMMSS(sec);
+  document.getElementById('timerBarFill').style.width = '0%';
+  document.getElementById('timerSubStatus').textContent = state.releaseMode === 'bulb'
+    ? 'a5000을 BULB로 맞추고 유선 릴리즈 HOLD 잠금과 동시에 시작하세요'
+    : '드라이브 [연사] 모드에서 릴리즈 HOLD 잠금과 동시에 시작하세요';
+}
+
+function toggleMainTimer() {
+  unlockAudio(); // Crucial for iOS Safari sound playback!
+  const btn = document.getElementById('timerStartBtn');
+  if (timerState.running) {
+    clearInterval(timerState.intervalId);
+    timerState.running = false;
+    btn.className = 'btn-primary';
+    btn.textContent = '▶️ 타이머 다시 시작';
+    document.getElementById('timerSubStatus').textContent = '일시 정지됨 — 릴리즈 HOLD를 해제하세요';
+    return;
+  }
+  const totalSec = state.releaseMode === 'bulb' ? state.bulbTargetSec : getHoldTotalWallSeconds();
+  timerState.totalSec = totalSec;
+  timerState.endTimeMs = Date.now() + totalSec * 1000;
+  timerState.running = true;
+  timerState.lastBeepSec = -1;
+  playBeep(660, 120);
+
+  btn.className = 'btn-danger';
+  btn.textContent = '⏹️ 정지 (릴리즈 해제)';
+  document.getElementById('timerSubStatus').textContent = '🔴 노출 진행 중... 삼각대를 건드리지 마세요!';
+
+  timerState.intervalId = setInterval(() => {
+    const remMs = timerState.endTimeMs - Date.now();
+    const remSec = remMs / 1000;
+    const pct = Math.min(100, Math.max(0, ((timerState.totalSec - remSec) / timerState.totalSec) * 100));
+    document.getElementById('timerBarFill').style.width = pct.toFixed(1) + '%';
+
+    const ceilSec = Math.ceil(remSec);
+    if (ceilSec <= 3 && ceilSec >= 1 && ceilSec !== timerState.lastBeepSec) {
+      timerState.lastBeepSec = ceilSec;
+      playBeep(520, 110);
+    }
+    if (remMs <= 0) {
+      clearInterval(timerState.intervalId);
+      timerState.running = false;
+      document.getElementById('timerDisplay').textContent = '00:00';
+      document.getElementById('timerBarFill').style.width = '100%';
+      document.getElementById('timerSubStatus').textContent = '✅ 완료! 지금 유선 릴리즈 HOLD를 해제하세요!';
+      btn.className = 'btn-primary';
+      btn.textContent = '▶️ 다시 시작 (알림음 ON)';
+      playBeep(980, 420);
+      setTimeout(() => playBeep(1240, 360), 460);
+    } else {
+      document.getElementById('timerDisplay').textContent = fmtMMSS(remSec);
+    }
+  }, 150);
+}
+
+function resetMainTimer() {
+  if (timerState.intervalId) clearInterval(timerState.intervalId);
+  timerState.running = false;
+  const btn = document.getElementById('timerStartBtn');
+  if (btn) {
+    btn.className = 'btn-primary';
+    btn.textContent = '▶️ 타이머 시작 (알림음 ON)';
+  }
+  updateTimerIdleDisplay();
+}
+
+function renderCalibChecklist() {
+  const items = [
+    { title: '삼각대 고정 + 렌즈 손떨림 보정(OSS) OFF', desc: '삼각대 위에서 OSS가 켜져 있으면 오히려 별이 미세하게 흔들립니다' },
+    { title: '라이트 프레임 (본촬영) 완료', desc: '별/성운 본촬영 — 유선 릴리즈 HOLD로 진동 없이 촬영' },
+    { title: '다크 프레임 20장 (렌즈캡 닫고 동일 세팅)', desc: '본촬영과 똑같은 ISO·셔터속도로 뚜껑 닫고 촬영 (열노이즈/핫픽셀 제거)' },
+    { title: '바이어스 프레임 20장 (뚜껑 닫고 1/4000s)', desc: '최단 셔터속도·동일 ISO로 촬영 (센서 읽기 노이즈 제거)' }
+  ];
+  document.getElementById('calibChecklistWrap').innerHTML = items.map((it, idx) => `
+    <div class="stack-item ${state.calibChecks[idx] ? 'checked' : ''}" onclick="toggleCalibCheck(${idx})">
+      <div class="stack-check">${state.calibChecks[idx] ? '✓' : ''}</div>
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#fff;">${it.title}</div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:2px;">${it.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+function toggleCalibCheck(i) { state.calibChecks[i] = !state.calibChecks[i]; renderCalibChecklist(); }
+function resetCalibChecks() { state.calibChecks = [false, false, false, false]; renderCalibChecklist(); }
+
+// ND Filter
+function stepNdStops(d) {
+  state.ndStops = Math.max(1, Math.min(15, state.ndStops + d));
+  calcNdFilter();
+}
+function calcNdFilter() {
+  state.baseShutterIdx = parseInt(document.getElementById('baseShutterIdx').value, 10);
+  const base = BASE_SHUTTERS[state.baseShutterIdx];
+  const factor = Math.pow(2, state.ndStops);
+  const newSec = base.val * factor;
+  const od = (state.ndStops * 0.3).toFixed(1);
+
+  document.getElementById('baseShutterLbl').textContent = base.label + ' s';
+  document.getElementById('ndStopDisp').textContent = state.ndStops;
+  document.getElementById('ndFilterNameLbl').textContent = `ND${factor} (${state.ndStops}스톱)`;
+  document.getElementById('ndStopsVal').innerHTML = state.ndStops + '<span class="metric-unit"> 스톱</span>';
+  document.getElementById('ndOdVal').innerHTML = od + '<span class="metric-unit"> ND</span>';
+  document.getElementById('ndFactorVal').textContent = factor + '×';
+
+  let fmt = '';
+  if (newSec < 1) fmt = '1/' + Math.max(1, Math.round(1 / newSec)) + ' s';
+  else if (newSec < 60) fmt = newSec.toFixed(1) + ' s';
+  else fmt = `${Math.floor(newSec / 60)}분 ${Math.round(newSec % 60)}초`;
+
+  document.getElementById('ndResultBig').textContent = fmt;
+  document.getElementById('ndHeadline').textContent = `${state.ndStops}스톱 ND 장착 시: ${base.label} → ${fmt}`;
+  document.getElementById('ndSubCompare').textContent = `이전 ${base.label} · ${state.ndStops}스톱 (ND${factor})`;
+  document.getElementById('ndAdvice').textContent = newSec >= 0.5
+    ? `노출 ${fmt}: 삼각대와 유선 릴리즈를 쓰세요`
+    : `노출 ${fmt}: 주간 모션블러·짐벌 촬영에 적합한 셔터속도입니다`;
+  window._lastNdSec = Math.max(1, Math.round(newSec));
+}
+function sendNdToBulbTimer() {
+  const sec = window._lastNdSec || 4;
+  setReleaseMode('bulb');
+  setBulbSeconds(sec);
+  const btn = document.querySelector('#tab-release .sub-tab-btn');
+  switchSubTab('release', 'rel-bulb', btn);
+}
+
+// Dynamic Focus Stacking
+function renderDynamicFocusStack() {
+  const kit = KITS[state.kitKey];
+  const effF = getEffectiveFocal();
+  const N = getCurrentAperture();
+  const startSlider = document.getElementById('stackStartSlider');
+  let startM = Math.max(kit.minFocus, parseFloat(startSlider.value));
+  document.getElementById('stackStartLbl').textContent = startM.toFixed(2) + ' m';
+
+  const cuts = [];
+  let cur = startM;
+  for (let i = 0; i < 8; i++) {
+    const d = computeDof(effF, N, cur, kit.coc);
+    cuts.push({ dist: cur, near: d.near_m, far: d.far_m });
+    if (d.far_m === Infinity || cur >= d.H_m) break;
+    // Next cut focuses at 85% overlap toward far limit
+    cur = Math.round((cur + (d.far_m - cur) * 1.45) * 100) / 100;
+    if (cur > 80) break;
+  }
+  document.getElementById('focusStackTitle').textContent = `총 ${cuts.length}컷으로 무한대까지 칼핀 (${Math.round(effF)}mm · f/${N})`;
+  document.getElementById('stackListWrap').innerHTML = cuts.map((c, idx) => {
+    const checked = !!state.stackChecks[idx];
+    const distTxt = c.dist >= 10 ? c.dist.toFixed(1) + ' m' : c.dist.toFixed(2) + ' m';
+    const farTxt = c.far === Infinity ? '∞' : c.far.toFixed(2) + ' m';
+    return `
+      <div class="stack-item ${checked ? 'checked' : ''}" onclick="toggleStackCut(${idx})">
+        <div class="stack-check">${checked ? '✓' : ''}</div>
+        <div>
+          <div style="font-size:11px;color:var(--text-sub);">${idx+1}번째 컷 · 선명구간 ${c.near.toFixed(2)}m ~ ${farTxt}</div>
+          <div style="font-size:16px;font-weight:900;color:#fff;margin-top:2px;">초점 ${distTxt}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+function toggleStackCut(idx) { state.stackChecks[idx] = !state.stackChecks[idx]; renderDynamicFocusStack(); }
+function resetStackChecks() { state.stackChecks = {}; renderDynamicFocusStack(); }
+
+// ==================== 5. 정밀 천문 계산 엔진 (달 위상·방위·고도·은하수·암흑시간) ====================
+const RAD = Math.PI / 180;
+const DEG = 180 / Math.PI;
+
+function toJulianDaysSinceJ2000(dateObj) {
+  return (dateObj.getTime() / 86400000 + 2440587.5) - 2451545.0;
+}
+function getSunPos(d) {
+  const M = ((357.5291 + 0.98560028 * d) % 360 + 360) % 360;
+  const C = 1.9148 * Math.sin(M * RAD) + 0.02 * Math.sin(2 * M * RAD) + 0.0003 * Math.sin(3 * M * RAD);
+  const L = ((M + C + 102.9372 + 180) % 360 + 360) % 360;
+  const e = 23.4397 * RAD;
+  const ra = (Math.atan2(Math.sin(L * RAD) * Math.cos(e), Math.cos(L * RAD)) * DEG + 360) % 360;
+  const dec = Math.asin(Math.sin(L * RAD) * Math.sin(e)) * DEG;
+  return { ra, dec, L };
+}
+function getMoonPos(d) {
+  const L = ((218.316 + 13.176396 * d) % 360 + 360) % 360;
+  const M = ((134.963 + 13.064993 * d) % 360 + 360) % 360;
+  const F = ((93.272 + 13.229350 * d) % 360 + 360) % 360;
+  const lam = ((L + 6.289 * Math.sin(M * RAD)) % 360 + 360) % 360;
+  const bet = 5.128 * Math.sin(F * RAD);
+  const e = 23.4397 * RAD;
+  const ra = (Math.atan2(Math.sin(lam * RAD) * Math.cos(e) - Math.tan(bet * RAD) * Math.sin(e), Math.cos(lam * RAD)) * DEG + 360) % 360;
+  const dec = Math.asin(Math.sin(bet * RAD) * Math.cos(e) + Math.cos(bet * RAD) * Math.sin(e) * Math.sin(lam * RAD)) * DEG;
+  return { ra, dec, lam };
+}
+function raDecToAltAz(ra, dec, d, lat, lon) {
+  const gmst = ((280.16 + 360.9856235 * d) % 360 + 360) % 360;
+  const lst = ((gmst + lon) % 360 + 360) % 360;
+  let H = ((lst - ra + 180) % 360 + 360) % 360 - 180;
+  const lr = lat * RAD, dr = dec * RAD, hr = H * RAD;
+  const sinAlt = Math.sin(lr) * Math.sin(dr) + Math.cos(lr) * Math.cos(dr) * Math.cos(hr);
+  const alt = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * DEG;
+  const azS = Math.atan2(Math.sin(hr), Math.cos(hr) * Math.sin(lr) - Math.tan(dr) * Math.cos(lr)) * DEG;
+  const az = ((azS + 180) % 360 + 360) % 360;
+  return { alt, az };
+}
+function getAstroSnapshot(dateObj, lat, lon) {
+  const d = toJulianDaysSinceJ2000(dateObj);
+  const sun = getSunPos(d);
+  const moon = getMoonPos(d);
+  const sunH = raDecToAltAz(sun.ra, sun.dec, d, lat, lon);
+  const moonH = raDecToAltAz(moon.ra, moon.dec, d, lat, lon);
+  const mwH = raDecToAltAz(266.4168, -29.0078, d, lat, lon); // Galactic Center Sgr A*
+
+  const cosPhi = Math.sin(sun.dec * RAD) * Math.sin(moon.dec * RAD) +
+                 Math.cos(sun.dec * RAD) * Math.cos(moon.dec * RAD) * Math.cos((moon.ra - sun.ra) * RAD);
+  const illum = Math.round(((1 - Math.max(-1, Math.min(1, cosPhi))) / 2) * 100);
+  const elong = ((moon.lam - sun.L) % 360 + 360) % 360;
+  const age = (elong / 360) * 29.530588;
+  const waxing = elong < 180;
+  return { sunH, moonH, mwH, illum, age, waxing, elong };
+}
+function azToKoreanDir(az) {
+  const dirs = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+  return dirs[Math.round(az / 45) % 8];
+}
+function getMoonPhaseKorean(illum, waxing) {
+  if (illum <= 4) return '삭 · 그믐달';
+  if (illum >= 96) return '보름달 (만월)';
+  if (waxing) {
+    if (illum < 42) return '초승달';
+    if (illum <= 58) return '상현달 (반달)';
+    return '차오르는 상현망간달';
+  } else {
+    if (illum > 58) return '기우는 하현망간달';
+    if (illum >= 42) return '하현달 (반달)';
+    return '그믐달';
+  }
+}
+
+function drawMoonPhaseSvg(illum, waxing) {
+  const svg = document.getElementById('moonPhaseSvg');
+  const r = 32, cx = 40, cy = 40;
+  // Terminator horizontal radius
+  const k = illum / 100;
+  const rx = Math.max(0.15, Math.abs(2 * k - 1) * r);
+  let path = '';
+  if (illum <= 2) {
+    path = '';
+  } else if (illum >= 98) {
+    path = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#fef08a"/>`;
+  } else {
+    const rightLit = waxing;
+    const sweepOuter = rightLit ? 1 : 0;
+    const sweepInner = (k > 0.5) ? (rightLit ? 1 : 0) : (rightLit ? 0 : 1);
+    path = `<path d="M ${cx} ${cy-r} A ${r} ${r} 0 0 ${sweepOuter} ${cx} ${cy+r} A ${rx.toFixed(1)} ${r} 0 0 ${sweepInner} ${cx} ${cy-r} Z" fill="#fef08a"/>`;
+  }
+  svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#1f2937" stroke="#4b5563" stroke-width="1.5"/>${path}`;
+}
+
+function parseLocalKstDate(dateStr, hour, minute) {
+  // Always construct KST (+09:00) explicitly to avoid UTC midnight browser bugs
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const utcMs = Date.UTC(y, m - 1, d, hour - 9, minute, 0);
+  return new Date(utcMs);
+}
+function getTodayKstStr() {
+  const nowKst = new Date(Date.now() + 9 * 3600000);
+  return nowKst.toISOString().split('T')[0];
+}
+function setPlannerToday() {
+  document.getElementById('plannerDateInput').value = getTodayKstStr();
+  updateMoonPlanner();
+}
+function setCalendarFilter(f, chipEl) {
+  state.calFilter = f;
+  document.querySelectorAll('#moon-plan .sample-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  render14DayCalendar();
+}
+
+function analyzeNight(dateStr) {
+  // Scan 24h for moonrise/moonset (00:00 ~ 23:50 KST) & scan night (18:00 ~ 06:00 KST next day)
+  let riseStr = '없음', setStr = '없음';
+  let prevAlt = null;
+  for (let m = 0; m <= 1440; m += 10) {
+    const dt = parseLocalKstDate(dateStr, Math.floor(m / 60), m % 60);
+    const alt = getAstroSnapshot(dt, state.lat, state.lon).moonH.alt;
+    if (prevAlt !== null) {
+      const hh = String(Math.floor(m / 60) % 24).padStart(2, '0');
+      const mm = String(m % 60).padStart(2, '0');
+      if (prevAlt < 0 && alt >= 0 && riseStr === '없음') riseStr = `${hh}:${mm}`;
+      if (prevAlt >= 0 && alt < 0 && setStr === '없음') setStr = `${hh}:${mm}`;
+    }
+    prevAlt = alt;
+  }
+
+  // Night scan: 18:00 to 30:00 (next day 06:00) in 15-min steps (49 samples)
+  const samples = [];
+  let maxMwAlt = -90;
+  let darkMoonlessMins = 0;
+  let darkTotalMins = 0;
+  let moonlessStart = null, moonlessEnd = null;
+  let midSnap = null;
+
+  for (let i = 0; i <= 48; i++) {
+    const totalMin = 18 * 60 + i * 15;
+    const dt = parseLocalKstDate(dateStr, Math.floor(totalMin / 60), totalMin % 60);
+    const snap = getAstroSnapshot(dt, state.lat, state.lon);
+    if (i === 20) midSnap = snap; // 23:00 KST
+    if (snap.mwH.alt > maxMwAlt) maxMwAlt = snap.mwH.alt;
+
+    const isDark = snap.sunH.alt <= -14;
+    const moonFree = (snap.moonH.alt <= 0) || (snap.illum <= 8);
+    if (isDark) {
+      darkTotalMins += 15;
+      if (moonFree) {
+        darkMoonlessMins += 15;
+        const hh = String(Math.floor(totalMin / 60) % 24).padStart(2, '0');
+        const mm = String(totalMin % 60).padStart(2, '0');
+        if (!moonlessStart) moonlessStart = `${hh}:${mm}`;
+        moonlessEnd = `${hh}:${mm}`;
+      }
+    }
+    samples.push({ i, totalMin, moonAlt: snap.moonH.alt, mwAlt: snap.mwH.alt, isDark, moonFree });
+  }
+
+  // Star score: heavily rewards moonless dark hours + low illumination
+  const darkRatio = darkTotalMins > 0 ? (darkMoonlessMins / darkTotalMins) : 0;
+  const starScore = Math.min(99, Math.max(10, Math.round(darkRatio * 75 + (100 - midSnap.illum) * 0.25)));
+
+  // Moon crater shooting score: 45%~95% waxing/waning gibbous & quarters give crisp crater shadows!
+  let moonScore = 0;
+  if (midSnap.illum < 12) moonScore = midSnap.illum * 2;
+  else if (midSnap.illum <= 88) moonScore = Math.round(70 + (midSnap.illum / 88) * 28);
+  else moonScore = Math.round(92 - (midSnap.illum - 88) * 0.8);
+
+  return { riseStr, setStr, samples, maxMwAlt, darkMoonlessMins, moonlessStart, moonlessEnd, midSnap, starScore, moonScore };
+}
+
+function updateMoonPlanner() {
+  const input = document.getElementById('plannerDateInput');
+  if (!input.value) input.value = getTodayKstStr();
+  const dateStr = input.value;
+  const info = analyzeNight(dateStr);
+  const nowSnap = getAstroSnapshot(new Date(), state.lat, state.lon);
+  const ms = info.midSnap;
+
+  document.getElementById('moonLocSub').textContent = `관측 기준: ${state.locName} (${state.lat.toFixed(2)}°N, ${state.lon.toFixed(2)}°E)`;
+  drawMoonPhaseSvg(ms.illum, ms.waxing);
+
+  const phaseName = getMoonPhaseKorean(ms.illum, ms.waxing);
+  document.getElementById('moonPhaseNameBig').textContent = `${phaseName} (${ms.illum}%)`;
+  document.getElementById('moonAgeText').textContent = `월령 ${ms.age.toFixed(1)}일 · 월출 ${info.riseStr} / 월몰 ${info.setStr}`;
+  document.getElementById('moonNowPosText').textContent =
+    `지금 실시간 달 위치: ${azToKoreanDir(nowSnap.moonH.az)} (${Math.round(nowSnap.moonH.az)}°) · 고도 ${nowSnap.moonH.alt.toFixed(1)}° ${nowSnap.moonH.alt > 0 ? '(하늘 위)' : '(지평선 아래)'}`;
+
+  document.getElementById('starScoreVal').textContent = info.starScore + '점';
+  document.getElementById('starScoreVal').style.color = info.starScore >= 75 ? 'var(--green)' : info.starScore >= 45 ? 'var(--accent)' : 'var(--danger)';
+  document.getElementById('moonShootScoreVal').textContent = info.moonScore + '점';
+  document.getElementById('mwPeakNightVal').textContent = info.maxMwAlt > 0 ? info.maxMwAlt.toFixed(1) + '°' : '비시즌';
+
+  // Golden Time Guidance
+  if (info.darkMoonlessMins >= 240) {
+    const hrs = (info.darkMoonlessMins / 60).toFixed(1);
+    document.getElementById('goldenActionTitle').textContent = '🌌 달 피해서 별·은하수 찍기 최상!';
+    document.getElementById('goldenTimeHours').textContent = `${info.moonlessStart} ~ ${info.moonlessEnd} (약 ${hrs}시간 암흑)`;
+    document.getElementById('goldenTimeTip').textContent = info.maxMwAlt >= 12
+      ? `은하수 중심부도 남쪽 하늘 ${info.maxMwAlt.toFixed(0)}°까지 올라옵니다! 35mm F1.8(6.8초 · ISO 3200)과 1.7× 초망원 성운 스태킹 모두 최고의 날입니다.`
+      : `은하수 중심부는 계절상 낮에 뜨지만, 달빛이 없어 오리온 대성운(M42)·안드로메다(M31)·별궤적 촬영에 완벽한 암흑 밤하늘입니다.`;
+  } else if (info.darkMoonlessMins >= 60) {
+    const hrs = (info.darkMoonlessMins / 60).toFixed(1);
+    document.getElementById('goldenActionTitle').textContent = '🌙 달 피하기 타임: 달 없는 구간 노리기';
+    document.getElementById('goldenTimeHours').textContent = `${info.moonlessStart} ~ ${info.moonlessEnd} (약 ${hrs}시간)`;
+    document.getElementById('goldenTimeTip').textContent = `달이 떠 있을 때는 55-210mm + 1.7×로 달 분화구를 찍고, ${info.moonlessStart} 이후 달빛이 사라지면 별 촬영으로 넘어가세요.`;
+  } else {
+    document.getElementById('goldenActionTitle').textContent = '🌕 밤새 달빛이 밝음 — [달 분화구 초근접] 추천!';
+    document.getElementById('goldenTimeHours').textContent = `20:00 ~ 03:00 (달 촬영 최적 · 55-210 + 1.7×)`;
+    document.getElementById('goldenTimeTip').textContent = `밤새 달빛(${ms.illum}%)이 강해 희미한 은하수는 묻힙니다. 대신 55-210mm + 1.7×(357mm), M모드 F8 · 1/250s · ISO 100 + 삼각대·릴리즈로 달 크레이터를 찍어보세요!`;
+  }
+
+  // Draw Tonight Altitude Chart SVG
+  const svg = document.getElementById('nightSkySvg');
+  const mapX = (i) => 18 + (i / 48) * 324;
+  const mapY = (alt) => 104 - (Math.max(-10, Math.min(80, alt)) / 80) * 86;
+
+  let darkRects = '';
+  info.samples.forEach((s, idx) => {
+    if (idx < 48 && s.isDark && s.moonFree) {
+      darkRects += `<rect x="${mapX(idx).toFixed(1)}" y="14" width="${(324/48 + 0.5).toFixed(1)}" height="90" fill="rgba(74, 222, 128, 0.12)"/>`;
+    }
+  });
+  const mwPts = info.samples.map(s => `${mapX(s.i).toFixed(1)},${mapY(s.mwAlt).toFixed(1)}`).join(' ');
+  const moonPts = info.samples.map(s => `${mapX(s.i).toFixed(1)},${mapY(s.moonAlt).toFixed(1)}`).join(' ');
+
+  svg.innerHTML = `
+    ${darkRects}
+    <line x1="18" y1="${mapY(10).toFixed(1)}" x2="342" y2="${mapY(10).toFixed(1)}" stroke="#475569" stroke-dasharray="3,3" stroke-width="1"/>
+    <text x="22" y="${(mapY(10)-4).toFixed(1)}" fill="#9ca8a1" font-size="8.5">10° 관측선</text>
+    <line x1="18" y1="104" x2="342" y2="104" stroke="#647069" stroke-width="1.5"/>
+    <polyline points="${moonPts}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4,3"/>
+    <polyline points="${mwPts}" fill="none" stroke="#f3b33d" stroke-width="2.5"/>
+    <text x="18" y="122" fill="#9ca8a1" font-size="9">18:00</text>
+    <text x="72" y="122" fill="#9ca8a1" font-size="9">20:00</text>
+    <text x="126" y="122" fill="#9ca8a1" font-size="9">22:00</text>
+    <text x="180" y="122" fill="#9ca8a1" font-size="9">00:00</text>
+    <text x="234" y="122" fill="#9ca8a1" font-size="9">02:00</text>
+    <text x="288" y="122" fill="#9ca8a1" font-size="9">04:00</text>
+    <text x="330" y="122" fill="#9ca8a1" font-size="9">06시</text>
+    <text x="240" y="24" fill="#4ade80" font-size="8.5">■ 초록 구간 = 달 없는 암흑</text>
+  `;
+
+  render14DayCalendar();
+}
+
+function render14DayCalendar() {
+  const baseDateStr = document.getElementById('plannerDateInput').value || getTodayKstStr();
+  const [y, m, d] = baseDateStr.split('-').map(Number);
+  const startDay = new Date(Date.UTC(y, m - 1, d));
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  let html = '';
+
+  for (let i = 0; i < 14; i++) {
+    const dt = new Date(startDay.getTime() + i * 86400000);
+    const ds = dt.toISOString().split('T')[0];
+    const wd = weekdays[dt.getUTCDay()];
+    const info = analyzeNight(ds);
+
+    if (state.calFilter === 'star' && info.starScore < 70) continue;
+    if (state.calFilter === 'moon' && info.moonScore < 70) continue;
+
+    const hrs = (info.darkMoonlessMins / 60).toFixed(1);
+    const badge = info.starScore >= 75
+      ? `<span style="color:var(--green);">🌟 별최적 (${info.starScore}점 · 암흑 ${hrs}h)</span>`
+      : info.moonScore >= 75
+        ? `<span style="color:var(--accent);">🌕 달촬영 (${info.moonScore}점 · 달빛 ${info.midSnap.illum}%)</span>`
+        : `<span style="color:var(--text-sub);">🌙 암흑 ${hrs}h · 달빛 ${info.midSnap.illum}%</span>`;
+
+    html += `
+      <div onclick="jumpToPlannerDate('${ds}')" style="background:var(--bg-card-alt);border:1px solid ${ds===baseDateStr?'var(--accent)':'var(--border)'};border-radius:11px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+        <div>
+          <span style="font-weight:800;font-size:12px;color:#fff;">${ds.slice(5)} (${wd})</span>
+          <span style="font-size:10.5px;color:var(--text-sub);margin-left:5px;">${getMoonPhaseKorean(info.midSnap.illum, info.midSnap.waxing)}</span>
+        </div>
+        <div style="font-size:11px;font-weight:800;">${badge}</div>
+      </div>`;
+  }
+  document.getElementById('weekMoonList').innerHTML = html || `<div style="font-size:12px;color:var(--text-sub);text-align:center;padding:12px;">선택한 14일 구간에 해당 조건의 날짜가 없습니다.</div>`;
+}
+
+function jumpToPlannerDate(ds) {
+  document.getElementById('plannerDateInput').value = ds;
+  updateMoonPlanner();
+}
+
+// NPF Star Rule
+function computeNpfSeconds(kit, focal_mm, N, mp) {
+  const aspect = kit.sensorWidth / kit.sensorHeight;
+  const pxWidth = Math.sqrt(mp * 1e6 * aspect);
+  const pitch_um = (kit.sensorWidth / pxWidth) * 1000;
+  const npf = (16.856 * N + 0.0997 * focal_mm + 13.713 * pitch_um) / focal_mm;
+  return Math.max(0.3, Math.round(npf * 10) / 10);
+}
 function stepMegapixels(delta) {
   state.mp = Math.max(12, Math.min(60, state.mp + delta));
   updateAstroUI();
+  updateHoldCalcUI();
 }
-
 function updateAstroUI() {
   const kit = KITS[state.kitKey];
-  const N = kit.apertures[state.apIndex];
+  const effF = getEffectiveFocal();
+  const N = getCurrentAperture();
   const aspect = kit.sensorWidth / kit.sensorHeight;
-  const pxWidth = Math.round(Math.sqrt(state.mp * 1000000 * aspect));
+  const pxWidth = Math.round(Math.sqrt(state.mp * 1e6 * aspect));
   const pitch = (kit.sensorWidth / pxWidth) * 1000;
 
-  const npfSec = computeNpfSeconds(kit, state.focal, N, state.mp);
-  const rule500Sec = Math.round((500 / (state.focal * kit.crop)) * 10) / 10;
+  const npfSec = computeNpfSeconds(kit, effF, N, state.mp);
+  const rule500Sec = Math.round((500 / (effF * kit.crop)) * 10) / 10;
 
   document.getElementById('mpDisp').textContent = state.mp;
   document.getElementById('mpWidthLabel').textContent = `가로 ${pxWidth} px`;
   document.getElementById('pitchVal').innerHTML = pitch.toFixed(2) + '<span class="metric-unit"> µm</span>';
   document.getElementById('npfVal').innerHTML = npfSec.toFixed(1) + '<span class="metric-unit"> s</span>';
   document.getElementById('r500Val').innerHTML = rule500Sec.toFixed(1) + '<span class="metric-unit"> s</span>';
-
   document.getElementById('npfBadge').textContent = `${npfSec.toFixed(1)} s 선명 (NPF)`;
   document.getElementById('rule500Badge').textContent = `${rule500Sec.toFixed(1)} s 궤적 (500법칙)`;
   document.getElementById('astroHeadline').textContent =
-    `별이 흐르기 전까지 ${npfSec.toFixed(1)}s: 500 법칙의 ${rule500Sec.toFixed(1)}s는 ${state.mp} MP에서 흐릅니다`;
+    `${Math.round(effF)}mm F${N} 기준 ${npfSec.toFixed(1)}s까지 별이 점으로 찍힙니다`;
+  document.getElementById('astroSubline').textContent = state.tcEnabled
+    ? `1.7× 텔레컨버터 장착(환산 ${Math.round(effF*kit.crop)}mm) 시 1초 안팎으로 짧게 연사해 스태킹하세요!`
+    : `500 법칙(${rule500Sec.toFixed(1)}s)으로 찍으면 ${state.mp}MP에서 별이 미세하게 흐릅니다`;
 }
 
-// ==================== 5. 🌙 실시간 달의 위상·방향·고도 & 골든타임 ====================
-function initMoonPlanner() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('plannerDateInput').value = today;
-  updateMoonPlanner();
-}
+// ==================== 6. 한글 광해 지도 (Leaflet + Korea Bortle Model + 시야 차폐각) ====================
+// Major Korean light pollution sources (lat, lon, strength, radiusKm, name)
+const KOREA_LIGHT_SOURCES = [
+  { name: '서울/수도권', lat: 37.5665, lon: 126.9780, s: 1.00, r: 34 },
+  { name: '인천',       lat: 37.4563, lon: 126.7052, s: 0.78, r: 22 },
+  { name: '수원/용인',  lat: 37.2636, lon: 127.0286, s: 0.76, r: 21 },
+  { name: '부산',       lat: 35.1796, lon: 129.0756, s: 0.92, r: 26 },
+  { name: '대구 도심',  lat: 35.8714, lon: 128.6014, s: 0.86, r: 23 },
+  { name: '달성/현풍',  lat: 35.6940, lon: 128.4550, s: 0.42, r: 10 },
+  { name: '경산',       lat: 35.8250, lon: 128.7410, s: 0.50, r: 12 },
+  { name: '구미',       lat: 36.1195, lon: 128.3446, s: 0.58, r: 14 },
+  { name: '포항',       lat: 36.0190, lon: 129.3435, s: 0.60, r: 15 },
+  { name: '울산',       lat: 35.5384, lon: 129.3114, s: 0.72, r: 19 },
+  { name: '창원/마산',  lat: 35.2280, lon: 128.6811, s: 0.68, r: 18 },
+  { name: '김해',       lat: 35.2285, lon: 128.8894, s: 0.58, r: 14 },
+  { name: '진주',       lat: 35.1802, lon: 128.1076, s: 0.50, r: 13 },
+  { name: '경주',       lat: 35.8562, lon: 129.2247, s: 0.46, r: 12 },
+  { name: '김천',       lat: 36.1398, lon: 128.1136, s: 0.38, r: 10 },
+  { name: '안동',       lat: 36.5684, lon: 128.7294, s: 0.42, r: 11 },
+  { name: '영천',       lat: 35.9733, lon: 128.9386, s: 0.35, r: 9 },
+  { name: '대전/세종',  lat: 36.3504, lon: 127.3845, s: 0.78, r: 22 },
+  { name: '청주',       lat: 36.6424, lon: 127.4890, s: 0.64, r: 17 },
+  { name: '천안/아산',  lat: 36.8151, lon: 127.1139, s: 0.64, r: 17 },
+  { name: '광주',       lat: 35.1595, lon: 126.8526, s: 0.78, r: 21 },
+  { name: '전주',       lat: 35.8242, lon: 127.1480, s: 0.62, r: 16 },
+  { name: '여수/순천',  lat: 34.8500, lon: 127.6000, s: 0.54, r: 15 },
+  { name: '원주',       lat: 37.3422, lon: 127.9202, s: 0.50, r: 13 },
+  { name: '춘천',       lat: 37.8813, lon: 127.7298, s: 0.48, r: 13 },
+  { name: '강릉',       lat: 37.7519, lon: 128.8761, s: 0.46, r: 12 },
+  { name: '제주 도심',  lat: 33.4996, lon: 126.5312, s: 0.64, r: 16 },
+  { name: '서귀포',     lat: 33.2541, lon: 126.5601, s: 0.42, r: 11 }
+];
 
-function updateMoonPlanner() {
-  const dateVal = document.getElementById('plannerDateInput').value;
-  const d = new Date(dateVal || Date.now());
-  
-  const refDate = new Date('2000-01-06T18:14:00Z');
-  const diffDays = (d - refDate) / (1000 * 60 * 60 * 24);
-  const cycle = 29.53058867;
-  const phase = ((diffDays % cycle) + cycle) % cycle / cycle; // 0..1
-  
-  const illumination = Math.round((1 - Math.cos(phase * 2 * Math.PI)) * 50); // 0..100%
-  let phaseName = '초승달';
-  if (illumination < 5) phaseName = '그믐달 (별보기 최고)';
-  else if (phase < 0.25) phaseName = '초승달';
-  else if (phase < 0.35) phaseName = '상현달 (반달)';
-  else if (phase < 0.65) phaseName = '보름달 (만월)';
-  else if (phase < 0.75) phaseName = '하현달 (반달)';
-  else phaseName = '그믐달';
-
-  // Moon rise / set estimation
-  let moonsetHour = (18 + phase * 24) % 24;
-  let moonriseHour = (6 + phase * 24) % 24;
-  const fmtTime = (h) => {
-    const hh = Math.floor(h);
-    const mm = Math.floor((h - hh) * 60);
-    return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-  };
-  const moonsetStr = fmtTime(moonsetHour);
-  const moonriseStr = fmtTime(moonriseHour);
-
-  // Position at 22:00 (Night Shoot Peak)
-  // Approximate azimuth and altitude at 22:00
-  let diffFromTransit = ((22 - (moonriseHour + 6)) % 24 + 24) % 24;
-  let estAlt = Math.round(50 - Math.abs(diffFromTransit - 12) * 5);
-  estAlt = Math.max(-20, Math.min(65, estAlt));
-  let estAzimuth = '남서 (230°)';
-  if (phase < 0.25) estAzimuth = '서남서 (250°)';
-  else if (phase < 0.5) estAzimuth = '남남서 (200°)';
-  else if (phase < 0.75) estAzimuth = '동남동 (120°)';
-  else estAzimuth = '지평선 아래 (미관측)';
-
-  let starScore = Math.max(10, 100 - illumination);
-  let moonScore = illumination; // Higher illum = better moon crater shoot
-
-  document.getElementById('moonPhaseVal').textContent = `${illumination}% (${phaseName})`;
-  document.getElementById('moonTimesVal').textContent = `${moonriseStr} / ${moonsetStr}`;
-  document.getElementById('starScoreVal').textContent = starScore + '점 🌟';
-  document.getElementById('moonAzimuthVal').textContent = estAzimuth;
-  document.getElementById('moonAltitudeVal').textContent = estAlt > 0 ? `${estAlt}° (하늘)` : `${estAlt}° (지평선 밑)`;
-  document.getElementById('moonShootScoreVal').textContent = moonScore + '점 🌕';
-
-  let goldenTitle = '';
-  let goldenDesc = '';
-  let goldenHours = '';
-  let goldenTip = '';
-
-  if (illumination < 15) {
-    goldenTitle = '🌌 오늘 밤은 별·은하수 올나잇 골든타임!';
-    goldenDesc = '달빛 간섭이 전혀 없는 완벽한 암흑 주간(그믐)입니다.';
-    goldenHours = '저녁 20:30 ~ 새벽 04:30 (무제한 촬영)';
-    goldenTip = '달빛이 없어 하늘이 짙은 암흑입니다. a5000 + 35mm F1.8로 NPF 6.8초 / ISO 3200 세팅으로 은하수 중심부와 밤하늘 수만 개의 별을 담아보세요!';
-  } else if (illumination < 60) {
-    goldenTitle = '🌙 달빛 피하기: 달 지는 시각 이후가 골든타임!';
-    goldenDesc = `밤 10시경 달빛이 있으나, <b>${moonsetStr}</b>에 달이 지면서 암흑이 찾아옵니다.`;
-    goldenHours = `${moonsetStr} 이후 ~ 새벽 04:00`;
-    goldenTip = `달이 떠 있는 초저녁에는 감성 달 풍경을 찍고, ${moonsetStr} 달이 진 직후부터는 남쪽 하늘을 향해 별과 은하수 촬영을 집중하세요.`;
-  } else {
-    goldenTitle = '🌕 오늘은 별 대신 [달 표면 크레이터] 촬영 추천!';
-    goldenDesc = '보름달에 가까워 별은 묻히지만, 달 표면 분화구가 가장 밝고 선명한 날입니다.';
-    goldenHours = '저녁 20:00 ~ 새벽 02:00';
-    goldenTip = '55-210mm 망원 렌즈를 꺼내 210mm 최대 망원, M모드 F8.0 / 셔터 1/250s / ISO 100으로 삼각대에 올리고 딸-깍 찍으면 달 분화구가 칼핀으로 담깁니다!';
-  }
-
-  document.getElementById('goldenActionTitle').innerHTML = goldenTitle;
-  document.getElementById('goldenTimeDesc').innerHTML = goldenDesc;
-  document.getElementById('goldenTimeHours').textContent = goldenHours;
-  document.getElementById('goldenTimeTip').textContent = goldenTip;
-
-  // 7-day table
-  let weekHtml = '';
-  for (let i = 0; i < 6; i++) {
-    const fD = new Date(d);
-    fD.setDate(d.getDate() + i);
-    const fDiff = (fD - refDate) / (1000 * 60 * 60 * 24);
-    const fPhase = ((fDiff % cycle) + cycle) % cycle / cycle;
-    const fIllum = Math.round((1 - Math.cos(fPhase * 2 * Math.PI)) * 50);
-    const fStarScore = Math.max(15, 100 - fIllum);
-    const dateStr = fD.toISOString().split('T')[0];
-    const isStarGood = fStarScore >= 75;
-    const badgeTxt = isStarGood ? `🌟 별추천 (${fStarScore}점)` : `🌕 달추천 (달빛 ${fIllum}%)`;
-    const badgeColor = isStarGood ? 'var(--green)' : 'var(--accent)';
-
-    weekHtml += `
-      <div style="background:var(--bg-card-alt);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <span style="font-weight:800;font-size:12px;color:#fff;">${dateStr}</span>
-          <span style="font-size:11px;color:var(--text-sub);margin-left:6px;">달빛 ${fIllum}%</span>
-        </div>
-        <span style="font-size:11px;font-weight:900;color:${badgeColor};background:rgba(0,0,0,0.3);padding:3px 8px;border-radius:6px;">${badgeTxt}</span>
-      </div>
-    `;
-  }
-  document.getElementById('weekMoonList').innerHTML = weekHtml;
-}
-
-// ==================== 6. 🗺️ 촬영 스팟 시야각 & 광해(Bortle) 계산 ====================
-const SPOT_PRESETS = {
-  odosan: { name: '합천 오도산 KT송신소', myAlt: 1134, obsDist: 4.5, obsHeight: 1200, cityDist: 52 },
-  gamaksan: { name: '거창 감악산 풍력단지', myAlt: 952, obsDist: 3.0, obsHeight: 900, cityDist: 60 },
-  bohyeon: { name: '영천 보현산 천문대', myAlt: 1124, obsDist: 5.0, obsHeight: 1050, cityDist: 48 },
-  biseul: { name: '대구 비슬산 대견사', myAlt: 1000, obsDist: 2.0, obsHeight: 1084, cityDist: 22 },
-  city_park: { name: '도심지 수변공원/옥상', myAlt: 40, obsDist: 0.3, obsHeight: 120, cityDist: 3 }
+const STAR_SPOTS = {
+  odosan:    { name: '합천 오도산 전망대 (KT)', lat: 35.6761, lon: 128.0558, alt: 1134, obsDist: 4.5, obsH: 1180 },
+  gamaksan:  { name: '거창 감악산 풍력단지',    lat: 35.5955, lon: 127.9219, alt: 952,  obsDist: 3.5, obsH: 940 },
+  bohyeon:   { name: '영천 보현산 천문대',      lat: 36.1647, lon: 128.9767, alt: 1124, obsDist: 5.0, obsH: 1080 },
+  biseul:    { name: '대구 비슬산 대견사',      lat: 35.7165, lon: 128.5248, alt: 1000, obsDist: 2.0, obsH: 1084 },
+  yeongyang: { name: '영양 반딧불이 천문대',    lat: 36.7985, lon: 129.2770, alt: 420,  obsDist: 3.0, obsH: 600 },
+  manhang:   { name: '태백 함백산 만항재',      lat: 37.1611, lon: 128.9022, alt: 1330, obsDist: 4.0, obsH: 1400 },
+  anbandegi: { name: '강릉 안반데기 멍에전망대', lat: 37.6244, lon: 128.7389, alt: 1100, obsDist: 5.0, obsH: 1120 },
+  jirisan:   { name: '지리산 정령치 휴게소',    lat: 35.3601, lon: 127.4939, alt: 1172, obsDist: 4.0, obsH: 1260 }
 };
 
-function loadSpotPreset(key, chipEl) {
-  if (chipEl) {
-    document.querySelectorAll('#tab-spot .sample-chip').forEach(c => c.classList.remove('active'));
-    chipEl.classList.add('active');
-  }
-  const s = SPOT_PRESETS[key];
-  document.getElementById('myAltSlider').value = s.myAlt;
-  document.getElementById('obsDistSlider').value = s.obsDist;
-  document.getElementById('obsHeightSlider').value = s.obsHeight;
-  document.getElementById('cityDistSlider').value = s.cityDist;
-  calculateSpotObstacle(s.name);
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const dLat = (lat2 - lat1) * RAD, dLon = (lon2 - lon1) * RAD;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*RAD)*Math.cos(lat2*RAD)*Math.sin(dLon/2)**2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function bearingDeg(lat1, lon1, lat2, lon2) {
+  const y = Math.sin((lon2 - lon1) * RAD) * Math.cos(lat2 * RAD);
+  const x = Math.cos(lat1 * RAD) * Math.sin(lat2 * RAD) - Math.sin(lat1 * RAD) * Math.cos(lat2 * RAD) * Math.cos((lon2 - lon1) * RAD);
+  return ((Math.atan2(y, x) * DEG) + 360) % 360;
 }
 
-function calculateSpotObstacle(customName) {
-  const myAlt = parseFloat(document.getElementById('myAltSlider').value); // m
-  const obsDistKm = parseFloat(document.getElementById('obsDistSlider').value); // km
-  const obsHeight = parseFloat(document.getElementById('obsHeightSlider').value); // m
-  const cityDistKm = parseFloat(document.getElementById('cityDistSlider').value); // km
+function estimateLightPollution(lat, lon) {
+  let totalRad = 0;
+  let maxContrib = -1;
+  let domCity = null;
+  let domDist = 999;
+
+  for (const c of KOREA_LIGHT_SOURCES) {
+    const dist = haversineKm(lat, lon, c.lat, c.lon);
+    const contrib = c.s * Math.exp(-(dist * dist) / (2 * c.r * c.r));
+    totalRad += contrib;
+    if (contrib > maxContrib) {
+      maxContrib = contrib;
+      domCity = c;
+      domDist = dist;
+    }
+  }
+  // Map radiance to Bortle 2..9 & SQM 21.85..17.6
+  let bortle = 2, sqm = 21.8;
+  if (totalRad >= 0.72)      { bortle = 9; sqm = 17.8; }
+  else if (totalRad >= 0.48) { bortle = 8; sqm = 18.4; }
+  else if (totalRad >= 0.30) { bortle = 7; sqm = 19.0; }
+  else if (totalRad >= 0.16) { bortle = 6; sqm = 19.6; }
+  else if (totalRad >= 0.08) { bortle = 5; sqm = 20.3; }
+  else if (totalRad >= 0.032){ bortle = 4; sqm = 21.0; }
+  else if (totalRad >= 0.010){ bortle = 3; sqm = 21.5; }
+  else                       { bortle = 2; sqm = 21.85; }
+
+  const brg = domCity ? bearingDeg(lat, lon, domCity.lat, domCity.lon) : 0;
+  return { bortle, sqm, totalRad, domCity, domDist, domDir: azToKoreanDir(brg) };
+}
+
+function radToColorRgba(rad, alphaMax) {
+  if (rad < 0.008) return [17, 24, 39, Math.round(alphaMax * 0.35)];
+  if (rad < 0.025) return [37, 99, 235, Math.round(alphaMax * 0.65)];
+  if (rad < 0.065) return [22, 163, 74, Math.round(alphaMax * 0.72)];
+  if (rad < 0.15)  return [234, 179, 8, Math.round(alphaMax * 0.78)];
+  if (rad < 0.30)  return [249, 115, 22, Math.round(alphaMax * 0.85)];
+  if (rad < 0.55)  return [220, 38, 38, Math.round(alphaMax * 0.90)];
+  return [248, 250, 252, Math.round(alphaMax * 0.95)];
+}
+
+let lpMap = null, osmLayer = null, darkLayer = null, lpGridLayer = null, activeMarker = null;
+let isDarkMap = false, lpOpacity = 0.55;
+let selectedMapPoint = { lat: 35.6761, lon: 128.0558, name: '합천 오도산 전망대 (KT)' };
+
+function initOrRefreshMap() {
+  if (typeof L === 'undefined') {
+    document.getElementById('lpMap').innerHTML =
+      `<div style="padding:24px;text-align:center;color:#9ca8a1;font-size:12.5px;line-height:1.6;">
+        📡 오프라인 상태이거나 지도 라이브러리 로딩이 지연되었습니다.<br>인터넷 연결 후 새로고침하시면 한글 지도가 표시됩니다.<br><br>
+        (위 스팟 버튼이나 아래 시야 차폐각 계산기는 오프라인에서도 정상 작동합니다!)
+      </div>`;
+    updateMapPointInfo(selectedMapPoint.lat, selectedMapPoint.lon, selectedMapPoint.name);
+    return;
+  }
+
+  if (!lpMap) {
+    lpMap = L.map('lpMap', { zoomControl: true, attributionControl: false }).setView([35.85, 128.45], 8);
+    osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17 });
+    darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 17 });
+    osmLayer.addTo(lpMap);
+
+    // Custom Leaflet GridLayer for Korea Bortle Light Pollution Heatmap
+    const LpCanvasLayer = L.GridLayer.extend({
+      createTile: function(coords) {
+        const tile = document.createElement('canvas');
+        const size = this.getTileSize();
+        tile.width = size.x; tile.height = size.y;
+        const ctx = tile.getContext('2d');
+        const step = 8; // Fast smooth rendering on iPhone
+        const nw = this._map.unproject([coords.x * size.x, coords.y * size.y], coords.z);
+        const se = this._map.unproject([(coords.x + 1) * size.x, (coords.y + 1) * size.y], coords.z);
+
+        // Quick bounding check around Korea to save battery
+        if (nw.lat < 32.5 || se.lat > 39.2 || se.lng < 124.5 || nw.lng > 131.5) return tile;
+
+        for (let py = 0; py < size.y; py += step) {
+          const lat = nw.lat + (se.lat - nw.lat) * ((py + step / 2) / size.y);
+          for (let px = 0; px < size.x; px += step) {
+            const lon = nw.lng + (se.lng - nw.lng) * ((px + step / 2) / size.x);
+            let totalRad = 0;
+            for (let k = 0; k < KOREA_LIGHT_SOURCES.length; k++) {
+              const c = KOREA_LIGHT_SOURCES[k];
+              const dLat = (lat - c.lat) * 111;
+              const dLon = (lon - c.lon) * 90;
+              const d2 = dLat * dLat + dLon * dLon;
+              if (d2 < c.r * c.r * 12) {
+                totalRad += c.s * Math.exp(-d2 / (2 * c.r * c.r));
+              }
+            }
+            const [r, g, b, a] = radToColorRgba(totalRad, 210);
+            ctx.fillStyle = `rgba(${r},${g},${b},${(a/255).toFixed(2)})`;
+            ctx.fillRect(px, py, step + 0.5, step + 0.5);
+          }
+        }
+        return tile;
+      }
+    });
+    lpGridLayer = new LpCanvasLayer({ opacity: lpOpacity });
+    lpGridLayer.addTo(lpMap);
+
+    // Add Star Spot Markers
+    Object.keys(STAR_SPOTS).forEach(key => {
+      const sp = STAR_SPOTS[key];
+      const m = L.circleMarker([sp.lat, sp.lon], {
+        radius: 6, color: '#f3b33d', fillColor: '#111', fillOpacity: 0.9, weight: 2.5
+      }).addTo(lpMap);
+      m.bindTooltip(sp.name, { direction: 'top' });
+      m.on('click', () => selectStarSpot(key));
+    });
+
+    lpMap.on('click', (e) => {
+      const lat = e.latlng.lat, lon = e.latlng.lng;
+      placeActiveMarker(lat, lon);
+      updateMapPointInfo(lat, lon, '지도 선택 지점');
+    });
+
+    placeActiveMarker(selectedMapPoint.lat, selectedMapPoint.lon);
+    updateMapPointInfo(selectedMapPoint.lat, selectedMapPoint.lon, selectedMapPoint.name);
+  }
+  lpMap.invalidateSize();
+}
+
+function placeActiveMarker(lat, lon) {
+  if (!lpMap) return;
+  if (activeMarker) lpMap.removeLayer(activeMarker);
+  activeMarker = L.circleMarker([lat, lon], {
+    radius: 9, color: '#4ade80', fillColor: '#4ade80', fillOpacity: 0.4, weight: 3
+  }).addTo(lpMap);
+}
+
+function toggleMapStyle() {
+  if (!lpMap) return;
+  isDarkMap = !isDarkMap;
+  if (isDarkMap) {
+    lpMap.removeLayer(osmLayer);
+    darkLayer.addTo(lpMap);
+    document.getElementById('mapStyleBtn').textContent = '🗺️ 한글 일반맵';
+  } else {
+    lpMap.removeLayer(darkLayer);
+    osmLayer.addTo(lpMap);
+    document.getElementById('mapStyleBtn').textContent = '🌙 다크맵 전환';
+  }
+  if (lpGridLayer) lpGridLayer.bringToFront();
+}
+
+function setLpOpacity(val) {
+  lpOpacity = parseFloat(val) / 100;
+  document.getElementById('lpOpacityLbl').textContent = val + '%';
+  if (lpGridLayer) lpGridLayer.setOpacity(lpOpacity);
+}
+
+function selectStarSpot(key, chipEl) {
+  document.querySelectorAll('#tab-spot .sample-chip').forEach(c => {
+    c.classList.toggle('active', chipEl ? (c === chipEl) : (c.dataset.spot === key));
+  });
+  const sp = STAR_SPOTS[key];
+  if (!sp) return;
+  selectedMapPoint = { lat: sp.lat, lon: sp.lon, name: sp.name };
+  if (lpMap) {
+    lpMap.setView([sp.lat, sp.lon], 10);
+    placeActiveMarker(sp.lat, sp.lon);
+  }
+  updateMapPointInfo(sp.lat, sp.lon, sp.name);
+  document.getElementById('myAltSlider').value = sp.alt;
+  document.getElementById('obsDistSlider').value = sp.obsDist;
+  document.getElementById('obsHeightSlider').value = sp.obsH;
+  calculateSpotObstacle();
+}
+
+function updateMapPointInfo(lat, lon, name) {
+  selectedMapPoint = { lat, lon, name };
+  const lp = estimateLightPollution(lat, lon);
+  document.getElementById('mapBortleVal').textContent = `Class ${lp.bortle}`;
+  document.getElementById('mapSqmVal').textContent = lp.sqm.toFixed(1);
+  document.getElementById('mapDomeDirVal').textContent = lp.domCity ? `${lp.domDir}(${lp.domCity.name.split(' ')[0]})` : '양호';
+  document.getElementById('mapSelectedName').textContent = `${name} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+
+  let adv = '';
+  const cityName = lp.domCity ? lp.domCity.name : '인근 도시';
+  if (lp.bortle <= 3) adv = `은하수 구조와 성운이 아주 선명한 최상급 암흑 하늘입니다! 주 광해원인 ${cityName}(${lp.domDir}쪽 ${lp.domDist.toFixed(0)}km) 반대 방향이 가장 어둡습니다.`;
+  else if (lp.bortle <= 5) adv = `은하수 촬영은 가능하나 ${lp.domDir}쪽 ${cityName}(${lp.domDist.toFixed(0)}km) 방향 지평선에 광해가 올라옵니다. 광해 반대편이나 천정 위주로 찍으세요.`;
+  else adv = `도심 광해(Class ${lp.bortle})가 강해 은하수보다는 달 분화구(1.7× 초망원)나 밝은 행성·별자리 촬영에 적합합니다.`;
+
+  document.getElementById('mapSelectedAdvice').textContent = adv;
+  document.getElementById('naverMapLink').href = `https://map.naver.com/p/search/${lat.toFixed(5)},${lon.toFixed(5)}`;
+  document.getElementById('tmapLink').href = `https://map.kakao.com/link/map/${encodeURIComponent(name)},${lat.toFixed(5)},${lon.toFixed(5)}`;
+  const mercX = (lon * 20037508.34 / 180).toFixed(0);
+  const mercY = (Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180) * 20037508.34 / 180).toFixed(0);
+  document.getElementById('viirsLink').href = `https://www.lightpollutionmap.info/#zoom=10&lat=${mercY}&lon=${mercX}&state=eyJiYXNlbWFwIjoiTGF5ZXJCaW5nUm9hZCIsIm92ZXJsYXkiOiJ3YV8yMDE1Iiwib3ZlcmxheWNvbG9yIjpmYWxzZSwib3ZlcmxheW9wYWNpdHkiOiI2MCIsImZlYXR1cmVzb3BhY2l0eSI6Ijg1In0=`;
+}
+
+function locateMyGps() {
+  if (!navigator.geolocation) {
+    alert('이 브라우저에서는 GPS 위치 기능을 지원하지 않습니다.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      if (lpMap) {
+        lpMap.setView([lat, lon], 11);
+        placeActiveMarker(lat, lon);
+      }
+      updateMapPointInfo(lat, lon, '내 현재 GPS 위치');
+    },
+    () => {
+      alert('GPS 위치 권한이 거부되었거나 HTTPS 환경이 아닙니다. (GitHub Pages 주소에서 열어주세요!)');
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function syncMapLocToMoonPlanner() {
+  state.lat = selectedMapPoint.lat;
+  state.lon = selectedMapPoint.lon;
+  state.locName = selectedMapPoint.name;
+  updateMoonPlanner();
+  switchTab('moon');
+}
+
+function calculateSpotObstacle() {
+  const myAlt = parseFloat(document.getElementById('myAltSlider').value);
+  const obsDistKm = parseFloat(document.getElementById('obsDistSlider').value);
+  const obsHeight = parseFloat(document.getElementById('obsHeightSlider').value);
 
   document.getElementById('myAltLabel').textContent = `${myAlt} m`;
-  document.getElementById('obsDistLabel').textContent = `${obsDistKm.toFixed(1)} km`;
+  document.getElementById('obsDistLabel').textContent = `${obsDistKm.toFixed(2)} km`;
   document.getElementById('obsHeightLabel').textContent = `${obsHeight} m`;
-  document.getElementById('cityDistLabel').textContent = `${cityDistKm} km`;
 
-  // Angular elevation of obstacle: theta = arctan((obsHeight - myAlt) / (dist * 1000))
-  const deltaH = obsHeight - myAlt;
-  const distM = obsDistKm * 1000;
-  let angleDeg = (Math.atan2(deltaH, distM) * 180 / Math.PI);
-  angleDeg = Math.round(angleDeg * 10) / 10;
+  const angleDeg = Math.round((Math.atan2(obsHeight - myAlt, obsDistKm * 1000) * DEG) * 10) / 10;
+  document.getElementById('spotMinAltVal').innerHTML = (angleDeg > 0 ? angleDeg.toFixed(1) : '0.0') + '<span class="metric-unit"> °</span>';
 
-  // Bortle class estimation based on distance from major city
-  // 0~5km: Class 8~9, 5~15km: Class 6~7, 15~35km: Class 4~5, 35~55km: Class 3, 55km+: Class 2
-  let bortle = 'Class 3 (교외 암흑)';
-  let bortleDesc = '육안으로 은하수가 선명히 보이며 성운/성단 구조가 풍부합니다.';
-  if (cityDistKm < 6) {
-    bortle = 'Class 8-9 (도심)';
-    bortleDesc = '광해가 극심해 1등성과 달만 보이며, 은하수 촬영은 불가능합니다.';
-  } else if (cityDistKm < 18) {
-    bortle = 'Class 6-7 (교외 전환부)';
-    bortleDesc = '지평선 부근 광해 돔이 밝으며, 천정 부근 별자리만 식별 가능합니다.';
-  } else if (cityDistKm < 35) {
-    bortle = 'Class 4-5 (시골 교외)';
-    bortleDesc = '은하수가 희미하게 보이며, 지평선 쪽 광해 필터링이 필요합니다.';
-  } else if (cityDistKm >= 55) {
-    bortle = 'Class 2 (천문대급 암흑)';
-    bortleDesc = '광해가 거의 없어 지평선까지 은하수가 쏟아지는 완벽한 환경입니다.';
-  }
-
-  const minAltDisplay = angleDeg > 0 ? angleDeg.toFixed(1) : '0.0 (시야 완전 개방)';
-  document.getElementById('spotMinAltVal').innerHTML = minAltDisplay + '<span class="metric-unit"> °</span>';
-  document.getElementById('spotBortleVal').textContent = bortle.split(' ')[0] + ' ' + bortle.split(' ')[1];
-
-  let mwStatus = '가능 (최적)';
-  let mwStatusColor = 'var(--green)';
-  if (angleDeg >= 22) {
-    mwStatus = '불가 (산에 가림)';
-    mwStatusColor = 'var(--danger)';
-  } else if (angleDeg >= 12) {
-    mwStatus = '주의 (일부 가림)';
-    mwStatusColor = 'var(--accent)';
-  }
   const statusEl = document.getElementById('spotMwStatusVal');
-  statusEl.textContent = mwStatus;
-  statusEl.style.color = mwStatusColor;
+  if (angleDeg >= 22) {
+    statusEl.textContent = '불가 (산에 가림)'; statusEl.style.color = 'var(--danger)';
+  } else if (angleDeg >= 12) {
+    statusEl.textContent = '주의 (하단 가림)'; statusEl.style.color = 'var(--accent)';
+  } else {
+    statusEl.textContent = '가능 (시야 개방)'; statusEl.style.color = 'var(--green)';
+  }
 
-  // Update SVG
-  const clampedAngle = Math.max(-5, Math.min(35, angleDeg));
-  const obsY = 115 - (clampedAngle + 5) * 2.2;
-  const poly = document.getElementById('obstaclePolygon');
-  poly.setAttribute('points', `200,115 250,${obsY} 300,115`);
-  const line = document.getElementById('obstacleAngleLine');
-  line.setAttribute('y2', obsY);
-  const angTxt = document.getElementById('obstacleAngleText');
-  angTxt.textContent = `차폐각 ${angleDeg > 0 ? angleDeg.toFixed(1) : '0'}°`;
-  angTxt.setAttribute('y', Math.min(105, obsY + 14));
-
-  const spotName = customName || '선택한 관측 스팟';
-  document.getElementById('spotReportHeader').textContent = `${spotName} 시야 & 광해 분석 리포트`;
-  document.getElementById('spotReportDetail').innerHTML = `
-    • <b>지형 차폐각:</b> ${angleDeg > 0 ? `주변 장애물로 인해 지평선 위 <b>${angleDeg}°</b> 이하 시야가 가립니다.` : '주변보다 고도가 높아 360도 지평선 시야가 완전히 트여 있습니다.'}<br>
-    • <b>은하수 중심부 영향:</b> 국내 여름 남쪽 은하수 중심부 고도는 최대 25~28°이므로, 현재 세팅에서는 <b>${mwStatus}</b> 상태입니다.<br>
-    • <b>광해 환경:</b> 인근 도시(${cityDistKm}km)로부터의 광해 수준은 <b>${bortle}</b>입니다. ${bortleDesc}
-  `;
+  const clamped = Math.max(-3, Math.min(35, angleDeg));
+  const obsY = 108 - (clamped + 3) * 2.1;
+  document.getElementById('obstaclePolygon').setAttribute('points', `200,108 250,${obsY.toFixed(1)} 300,108`);
+  document.getElementById('obstacleAngleLine').setAttribute('y2', obsY.toFixed(1));
+  const txt = document.getElementById('obstacleAngleText');
+  txt.textContent = `차폐각 ${angleDeg > 0 ? angleDeg.toFixed(1) : '0.0'}°`;
+  txt.setAttribute('y', Math.min(98, obsY + 14).toFixed(1));
 }
 
-// ==================== 7. 상황별 정답지 ====================
-function renderPresets() {
-  const presets = [
-    {
-      title: '🌌 합천 오도산 / 보현산 은하수 전갈자리',
-      gear: 'a5000 + 35mm F1.8 (환산 52mm)',
-      settings: 'M 모드 · F1.8 · 6.8초 (NPF) · ISO 3200',
-      tip: '[스팟시야광해] 탭에서 남쪽 시야각을 확인하고, [달·별골든] 탭의 달빛 0% 골든타임에 맞춰 삼각대 고정 후 촬영하세요!'
-    },
-    {
-      title: '🌕 밤하늘 달 크레이터(분화구) 정밀 촬영',
-      gear: 'a5000 + 55-210mm (210mm 최대 망원)',
-      settings: 'M 모드 · F8.0 · 1/250s · ISO 100',
-      tip: '달은 태양빛을 직접 반사해 매우 밝습니다! 장노출이 아니라 대낮 사진처럼 1/250초·ISO 100으로 찍어야 분화구가 쨍하게 나옵니다.'
-    },
-    {
-      title: '👶 실내 카페 / 아이 / 인물 보케',
-      gear: 'a5000 + 35mm F1.8',
-      settings: 'A 모드 · F1.8 · 1/125s · ISO AUTO(400~800)',
-      tip: '조리개를 F1.8 끝까지 풀면 실내 배경이 크림처럼 녹아내리며 어두운 곳에서도 셔터속도가 확보됩니다.'
-    },
-    {
-      title: '🚗 와인딩·서킷 주행 차량 패닝/롤링샷',
-      gear: 'a5000 + 55-210mm (또는 35mm)',
-      settings: 'S 모드 · 셔터 1/60s ~ 1/125s · AF-C 연사',
-      tip: '셔터속도를 1/80초 부근에 두고 차 속도에 맞춰 카메라를 수평으로 따라 돌리면 역동적인 속도감이 생깁니다.'
-    },
-    {
-      title: '🎬 오즈모 포켓 4 Pro 시네마틱 주간 브이로그',
-      gear: '포켓 4 Pro (20mm 광각 / 60mm 망원)',
-      settings: 'PRO 수동 · 4K 60p · 셔터 1/120s · ISO 50~100',
-      tip: '프레임의 2배 역수(60p면 1/120초)로 셔터를 고정하고 마그네틱 ND 필터를 끼우면 영화 같은 자연스러운 모션블러가 살아납니다.'
-    }
-  ];
+// ==================== 7. 원클릭 적용 상황별 정답지 ====================
+const PRESETS_DATA = [
+  {
+    title: '🌕 보름달·상현달 크레이터 초근접',
+    gear: 'a5000 + 55-210 + 1.7× (357mm)',
+    settings: 'M 모드 · F8.0 · 1/250s · ISO 100 · 삼각대+릴리즈',
+    tip: '달은 햇빛을 받아 대낮처럼 밝습니다. 1.7× 장착 후 수동 초점(MF) 확대로 달 테두리에 맞추고 유선 릴리즈로 OSS 끄고 찍으세요!',
+    apply: () => { state.baseFocal = 210; state.tcEnabled = true; selectKit('a5000_55210', true); state.fovTarget = 'moon'; switchTab('dof'); switchSubTab('dof', 'dof-fov', document.querySelectorAll('#tab-dof .sub-tab-btn')[1]); }
+  },
+  {
+    title: '🌀 오리온 대성운(M42) 무적도의 1초 연사 스태킹',
+    gear: 'a5000 + 55-210 + 1.7× (357mm)',
+    settings: 'M 모드 · F6.3 · 1.0초 · ISO 3200 · 연사 HOLD 300장',
+    tip: '적도의 없이도 1초 연사로 300장 + 다크 20장을 찍어 스태킹하면 붉은 오리온 성운 날개가 선명하게 올라옵니다!',
+    apply: () => { state.baseFocal = 210; state.tcEnabled = true; selectKit('a5000_55210', true); setReleaseMode('hold'); state.holdShutterSec = 1.0; state.holdGoalMin = 5; updateHoldCalcUI(); updateTimerIdleDisplay(); switchTab('release'); }
+  },
+  {
+    title: '🌌 오도산·보현산 은하수 중심부',
+    gear: 'a5000 + 35mm F1.8',
+    settings: 'M 모드 · F1.8 · 6.5초(NPF) · ISO 3200 · 릴리즈',
+    tip: '500법칙(9초)은 별이 흐릅니다. 6.5초로 20장 이상 찍어 스태킹하고, 다크 프레임 15~20장도 꼭 챙기세요!',
+    apply: () => { selectKit('a5000_35'); loadSampleScene('milky_way'); switchTab('meter'); }
+  },
+  {
+    title: '☕ 실내 카페 · 아이 · 인물 감성 보케',
+    gear: 'a5000 + 35mm F1.8',
+    settings: 'A 모드 · F1.8 · 1/125s · ISO AUTO(400~800)',
+    tip: '조리개를 F1.8 끝까지 열면 실내 배경이 깔끔하게 흐려지고 흔들림 없는 셔터속도가 확보됩니다.',
+    apply: () => { selectKit('a5000_35'); loadSampleScene('indoor_cafe'); switchTab('meter'); }
+  },
+  {
+    title: '🚗 와인딩·서킷 주행 차량 패닝샷',
+    gear: 'a5000 + 55-210mm (100~150mm)',
+    settings: 'S 모드 · 1/80s ~ 1/125s · AF-C · 연사',
+    tip: '차량 속도에 맞춰 카메라를 수평으로 따라 돌리며 연사하면 차체는 쨍하고 바퀴·배경에 속도감이 살아납니다.',
+    apply: () => { state.baseFocal = 120; state.tcEnabled = false; selectKit('a5000_55210', true); loadSampleScene('car_panning'); switchTab('meter'); }
+  },
+  {
+    title: '🎬 오즈모 포켓 4 Pro 시네마틱 주간 촬영',
+    gear: '포켓 4 Pro (20mm 광각 / 60mm 망원)',
+    settings: 'PRO 수동 · 4K 60p · 1/120s · ISO 50~100 + ND',
+    tip: '180도 셔터 법칙(60p → 1/120s)을 고정하고 밝기에 맞춰 ND16~ND64 필터로 노출을 맞추세요.',
+    apply: () => { selectKit('pocket_20'); switchTab('meter'); }
+  }
+];
 
-  document.getElementById('presetCardsContainer').innerHTML = presets.map(p => `
+function renderPresets() {
+  document.getElementById('presetCardsContainer').innerHTML = PRESETS_DATA.map((p, idx) => `
     <div style="background:var(--bg-card-alt);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:14px;font-weight:800;color:#fff;">${p.title}</span>
-        <span style="font-size:10px;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:6px;font-weight:700;">${p.gear}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+        <span style="font-size:13.5px;font-weight:800;color:#fff;">${p.title}</span>
+        <span style="font-size:10px;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:6px;font-weight:700;white-space:nowrap;">${p.gear}</span>
       </div>
-      <div style="font-size:13px;font-weight:900;color:var(--green);margin:6px 0;">${p.settings}</div>
-      <div style="font-size:12px;color:var(--text-sub);line-height:1.45;">${p.tip}</div>
+      <div style="font-size:12.5px;font-weight:900;color:var(--green);margin:6px 0;">${p.settings}</div>
+      <div style="font-size:12px;color:var(--text-sub);line-height:1.45;margin-bottom:10px;">${p.tip}</div>
+      <button class="btn-secondary" style="width:100%;padding:8px;font-size:12px;border-color:rgba(243,179,61,0.35);color:var(--accent);" onclick="PRESETS_DATA[${idx}].apply()">⚡ 이 세팅 바로 적용하기</button>
     </div>
   `).join('');
 }
@@ -1830,14 +2854,21 @@ function closeInstallModal() { document.getElementById('installModal').classList
 function updateAllCalculations() {
   calculateMeterRecommendation();
   updateDofUI();
+  drawFovCanvas();
   updateAstroUI();
-  initMoonPlanner();
-  calculateSpotObstacle('합천 오도산 KT 송신소');
-  renderPresets();
+  updateHoldCalcUI();
+  updateTimerIdleDisplay();
+  calcNdFilter();
+  renderDynamicFocusStack();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('plannerDateInput').value = getTodayKstStr();
+  renderCalibChecklist();
+  renderPresets();
   updateAllCalculations();
+  updateMoonPlanner();
+  calculateSpotObstacle();
 });
 </script>
 </body>
